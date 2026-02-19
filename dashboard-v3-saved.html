@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Frontier - IDX LQ45 Screener</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0f1a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            padding: 24px;
+            border-bottom: 1px solid #334155;
+        }
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .container { max-width: 1600px; margin: 0 auto; padding: 24px; }
+        
+        /* ENLARGED Panel */
+        .detail-panel {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 950px;
+            height: 100vh;
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+            border-left: 1px solid #334155;
+            overflow-y: auto;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 100;
+        }
+        .detail-panel.active { transform: translateX(0); }
+        .detail-header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 24px;
+            border-bottom: 1px solid #334155;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .detail-content { padding: 24px; }
+        
+        /* Quick Stats */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .quick-stat-card {
+            background: rgba(30, 41, 59, 0.8);
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            text-align: center;
+        }
+        .quick-stat-card .value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .quick-stat-card .label {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+        
+        .timeframe-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .timeframe-btn {
+            padding: 8px 16px;
+            background: #334155;
+            border: none;
+            color: #94a3b8;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .timeframe-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .section {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #334155;
+        }
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #60a5fa;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+        }
+        
+        .broker-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        .broker-table th {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 8px 6px;
+            font-size: 9px;
+            text-align: left;
+        }
+        .broker-table td {
+            padding: 8px 6px;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .price-action-box {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .executive-summary {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .macro-thesis {
+            background: rgba(234, 179, 8, 0.1);
+            border-left: 3px solid #eab308;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #94a3b8;
+            font-size: 20px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+        }
+        
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 99;
+        }
+        .overlay.active { display: block; }
+        
+        .buy { color: #22c55e; }
+        .sell { color: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="overlay" id="overlay" onclick="closeDetail()"></div>
+    
+    <header class="header">
+        <div class="header-content">
+            <div>
+                <h1>The Frontier</h1>
+                <p>Professional IDX LQ45 Screener</p>
+            </div>
+            <button onclick="loadData()" style="padding: 12px 24px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">Refresh</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="stats-container"></div>
+        <div id="table-container"></div>
+    </div>
+
+    <div class="detail-panel" id="detail-panel">
+        <div class="detail-header">
+            <button class="close-btn" onclick="closeDetail()">×</button>
+            <div id="detail-header-content"></div>
+        </div>
+        <div class="detail-content" id="detail-content"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://68.183.229.3:5000/api';
+        let screenerData = [];
+        let currentTimeframe = '1D';
+
+        async function loadData() {
+            try {
+                const response = await fetch(`${API_URL}/screener`);
+                const result = await response.json();
+                if (result.status === 'success') {
+                    screenerData = result.data;
+                    updateStats();
+                    renderTable();
+                }
+            } catch (err) {
+                console.error('Error:', err);
+            }
+        }
+
+        function updateStats() {
+            const html = `
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+                    <div style="background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155;">
+                        <div style="color: #64748b; font-size: 11px; text-transform: uppercase;">Total</div>
+                        <div style="font-size: 32px; font-weight: bold; margin-top: 8px;">${screenerData.length}</div>
+                    </div>
+                    <div style="background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155;">
+                        <div style="color: #64748b; font-size: 11px; text-transform: uppercase;">Buy</div>
+                        <div style="font-size: 32px; font-weight: bold; margin-top: 8px; color: #22c55e;">${screenerData.filter(s => s.signal === 'BUY').length}</div>
+                    </div>
+                    <div style="background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155;">
+                        <div style="color: #64748b; font-size: 11px; text-transform: uppercase;">Hold</div>
+                        <div style="font-size: 32px; font-weight: bold; margin-top: 8px; color: #eab308;">${screenerData.filter(s => s.signal === 'HOLD').length}</div>
+                    </div>
+                    <div style="background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155;">
+                        <div style="color: #64748b; font-size: 11px; text-transform: uppercase;">Sell</div>
+                        <div style="font-size: 32px; font-weight: bold; margin-top: 8px; color: #ef4444;">${screenerData.filter(s => s.signal === 'SELL').length}</div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('stats-container').innerHTML = html;
+        }
+
+        function renderTable() {
+            const html = `
+                <div style="background: #1e293b; border-radius: 12px; overflow: hidden; border: 1px solid #334155;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        <thead>
+                            <tr style="background: #0f172a;">
+                                <th style="padding: 14px 12px; text-align: left; font-size: 10px; color: #64748b; text-transform: uppercase;">Stock</th>
+                                <th style="padding: 14px 12px; text-align: left; font-size: 10px; color: #64748b; text-transform: uppercase;">Price</th>
+                                <th style="padding: 14px 12px; text-align: left; font-size: 10px; color: #64748b; text-transform: uppercase;">Change</th>
+                                <th style="padding: 14px 12px; text-align: left; font-size: 10px; color: #64748b; text-transform: uppercase;">Foreign</th>
+                                <th style="padding: 14px 12px; text-align: left; font-size: 10px; color: #64748b; text-transform: uppercase;">Score</th>
+                                <th style="padding: 14px 12px; text-align: left; font-size: 10px; color: #64748b; text-transform: uppercase;">Signal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${screenerData.map(stock => {
+                                const foreignValue = (stock.indicators?.foreignNetValue || 0) / 1000000000;
+                                const scoreColor = stock.score >= 65 ? '#22c55e' : stock.score >= 45 ? '#eab308' : '#ef4444';
+                                return `
+                                <tr onclick="showDetail('${stock.symbol}')" style="cursor: pointer; border-bottom: 1px solid #334155;">
+                                    <td style="padding: 14px 12px;"><strong>${stock.symbol}</strong><br><span style="font-size: 11px; color: #64748b;">${stock.name}</span></td>
+                                    <td style="padding: 14px 12px;">Rp ${stock.price?.toLocaleString()}</td>
+                                    <td style="padding: 14px 12px; color: ${stock.changePct >= 0 ? '#22c55e' : '#ef4444'};">${stock.changePct >= 0 ? '+' : ''}${stock.changePct?.toFixed(2)}%</td>
+                                    <td style="padding: 14px 12px; color: ${foreignValue > 0 ? '#22c55e' : '#ef4444'};">${foreignValue > 0 ? '+' : ''}${foreignValue.toFixed(2)}B</td>
+                                    <td style="padding: 14px 12px; color: ${scoreColor}; font-weight: 700;">${stock.score}</td>
+                                    <td style="padding: 14px 12px;"><span style="padding: 4px 10px; border-radius: 20px; font-size: 10px; background: ${stock.signal === 'BUY' ? 'rgba(34,197,94,0.2)' : stock.signal === 'SELL' ? 'rgba(239,68,68,0.2)' : 'rgba(234,179,8,0.2)'}; color: ${stock.signal === 'BUY' ? '#22c55e' : stock.signal === 'SELL' ? '#ef4444' : '#eab308'}">${stock.signal}</span></td>
+                                </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            document.getElementById('table-container').innerHTML = html;
+        }
+
+        async function showDetail(symbol) {
+            const stock = screenerData.find(s => s.symbol === symbol);
+            if (!stock) return;
+
+            let detailed = stock;
+            try {
+                const res = await fetch(`${API_URL}/stock/${symbol}`);
+                const result = await res.json();
+                if (result.status === 'success') detailed = result.data;
+            } catch (e) {}
+
+            const i = detailed.indicators;
+            const tf = i.timeframes?.[currentTimeframe] || { brokers: [], label: 'Current Day' };
+            const bigDogs = i.bigDogActivity || [];
+            const analysis = detailed.comprehensiveAnalysis;
+            
+            const foreignNet = (i.foreignFlow?.netValue || 0) / 1000000000;
+            const volume = (i.volumeAnalysis?.totalVolume || 0) / 1000000;
+            const largeLots = i.largeLotTransactions?.count || 0;
+            const sidChange = i.sidData?.change || 0;
+            
+            const tfBrokers = tf.brokers || [];
+            const buyers = tfBrokers.filter(b => b.netValue > 0).sort((a, b) => b.netValue - a.netValue);
+            const sellers = tfBrokers.filter(b => b.netValue < 0).sort((a, b) => a.netValue - b.netValue);
+            const bigDogBuyers = bigDogs.filter(b => b.action === 'ACCUMULATING');
+            const bigDogSellers = bigDogs.filter(b => b.action === 'DISTRIBUTING');
+
+            document.getElementById('detail-header-content').innerHTML = `
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <div>
+                        <h2 style="font-size: 24px; margin: 0;">${detailed.symbol}</h2>
+                        <p style="color: #64748b; margin: 4px 0 0;">${detailed.name}</p>
+                    </div>
+                    <div style="margin-left: auto; text-align: right;">
+                        <div style="font-size: 32px; font-weight: 700;">Rp ${detailed.price?.current?.toLocaleString()}</div>
+                        <div style="font-size: 14px; color: ${detailed.price?.changePct >= 0 ? '#22c55e' : '#ef4444'};">${detailed.price?.changePct >= 0 ? '+' : ''}${detailed.price?.changePct?.toFixed(2)}%</div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('detail-content').innerHTML = `
+                <!-- Quick Stats -->
+                <div class="quick-stats">
+                    <div class="quick-stat-card"><div class="value ${foreignNet >= 0 ? 'buy' : 'sell'}">${foreignNet >= 0 ? '+' : ''}${foreignNet.toFixed(1)}B</div><div class="label">Foreign Net</div></div>
+                    <div class="quick-stat-card"><div class="value">${volume.toFixed(1)}M</div><div class="label">Volume Today</div></div>
+                    <div class="quick-stat-card"><div class="value">${largeLots}</div><div class="label">Large Lots</div></div>
+                    <div class="quick-stat-card"><div class="value ${sidChange >= 0 ? 'buy' : 'sell'}">${sidChange >= 0 ? '+' : ''}${sidChange}</div><div class="label">SID Change</div></div>
+                </div>
+
+                <!-- Timeframe -->
+                <div class="timeframe-selector">
+                    ${['1D', '1W', '1M', '1Y'].map(tf => `<button class="timeframe-btn ${currentTimeframe === tf ? 'active' : ''}" onclick="setTimeframe('${tf}', '${symbol}')">${tf}</button>`).join('')}
+                </div>
+
+                <!-- Price Action -->
+                <div class="price-action-box">
+                    <div style="font-weight: 700; color: #22c55e; margin-bottom: 8px;">📈 PRICE ACTION</div>
+                    <div style="font-size: 13px;">${getSignals(detailed, i)}</div>
+                </div>
+
+                <!-- Big Dog Split -->
+                <div class="two-column">
+                    <div class="section">
+                        <div class="section-title">🐕 BIG DOG BUYING (${currentTimeframe})</div>
+                        ${bigDogBuyers.length ? renderBigDogTable(bigDogBuyers, 'buy') : '<p style="color: #64748b;">No buying activity</p>'}
+                    </div>
+                    <div class="section">
+                        <div class="section-title">🐕 BIG DOG SELLING (${currentTimeframe})</div>
+                        ${bigDogSellers.length ? renderBigDogTable(bigDogSellers, 'sell') : '<p style="color: #64748b;">No selling activity</p>'}
+                    </div>
+                </div>
+
+                <!-- Top Broker Split -->
+                <div class="two-column">
+                    <div class="section">
+                        <div class="section-title">📊 TOP BROKERS BUYING (${currentTimeframe})</div>
+                        ${buyers.length ? renderBrokerTable(buyers, 'buy') : '<p style="color: #64748b;">No buying</p>'}
+                    </div>
+                    <div class="section">
+                        <div class="section-title">📊 TOP BROKERS SELLING (${currentTimeframe})</div>
+                        ${sellers.length ? renderBrokerTable(sellers, 'sell') : '<p style="color: #64748b;">No selling</p>'}
+                    </div>
+                </div>
+
+                <!-- Executive Summary (BELOW) -->
+                <div class="executive-summary">
+                    <h3 style="color: #60a5fa; margin-bottom: 12px;">📝 Executive Summary</h3>
+                    <div style="font-size: 14px; margin-bottom: 16px;">${analysis?.summary || detailed.reasoning?.summary || 'No summary'}</div>
+                    
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(59, 130, 246, 0.3);">
+                        <div style="font-weight: 600; color: #60a5fa; margin-bottom: 8px;">🎯 Key Factors</div>
+                        <div style="font-size: 13px;">${detailed.reasoning?.details?.map(d => `<div style="margin-bottom: 6px; padding-left: 12px; border-left: 2px solid #334155;">${d}</div>`).join('') || 'No factors'}</div>
+                    </div>
+
+                    <div class="macro-thesis">
+                        <div style="font-weight: 600; color: #eab308; margin-bottom: 8px;">🌍 Macro Investment Thesis</div>
+                        <div style="font-size: 13px;">${analysis?.macroThesis || getMacroThesis(symbol)}</div>
+                    </div>
+                </div>
+
+                <!-- Fundamentals & Cost Basis -->
+                <div class="two-column">
+                    <div class="section">
+                        <div class="section-title">📈 FUNDAMENTAL ANALYSIS</div>
+                        <div style="font-size: 13px;">${getFundamentals(symbol)}</div>
+                    </div>
+                    <div class="section">
+                        <div class="section-title">💰 COST BASIS & LEVELS</div>
+                        <div style="font-size: 13px; line-height: 1.8;">${getCostBasis(detailed, analysis)}</div>
+                    </div>
+                </div>
+
+                <!-- More Analysis -->
+                ${analysis?.sections?.filter(s => !s.title.includes('FUNDAMENTAL') && !s.title.includes('COST BASIS')).map(s => `
+                    <div class="section">
+                        <div class="section-title">${s.title}</div>
+                        <div style="font-size: 13px; line-height: 1.6;">${s.content.map(item => `<div style="margin-bottom: 4px;">${item}</div>`).join('')}</div>
+                    </div>
+                `).join('') || ''}
+            `;
+
+            document.getElementById('detail-panel').classList.add('active');
+            document.getElementById('overlay').classList.add('active');
+        }
+
+        function renderBigDogTable(brokers, type) {
+            return `<table class="broker-table">
+                <thead><tr><th>Broker</th><th>Lots</th><th>Avg Price</th></tr></thead>
+                <tbody>
+                    ${brokers.map(b => {
+                        const lots = type === 'buy' ? b.buyVolume : b.sellVolume;
+                        const price = type === 'buy' ? b.avgBuyPrice : b.avgSellPrice;
+                        return `<tr><td><strong>${b.code}</strong></td><td style="color: ${type === 'buy' ? '#22c55e' : '#ef4444'}">${(lots/1000).toFixed(1)}K</td><td>Rp ${price?.toLocaleString()}</td></tr>`;
+                    }).join('')}
+                </tbody>
+            </table>`;
+        }
+
+        function renderBrokerTable(brokers, type) {
+            return `<table class="broker-table">
+                <thead><tr><th>Broker</th><th>Total</th><th>Avg</th><th>Net</th></tr></thead>
+                <tbody>
+                    ${brokers.slice(0, 8).map(b => `
+                        <tr>
+                            <td><strong>${b.code}</strong></td>
+                            <td style="font-weight: 600;">${((b.buyVolume + b.sellVolume)/1000).toFixed(1)}K</td>
+                            <td>Rp ${type === 'buy' ? b.avgBuyPrice?.toLocaleString() : b.avgSellPrice?.toLocaleString()}</td>
+                            <td style="color: ${type === 'buy' ? '#22c55e' : '#ef4444'}">${type === 'buy' ? '+' : ''}${(b.netValue/1000000000).toFixed(1)}B</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>`;
+        }
+
+        function setTimeframe(tf, symbol) {
+            currentTimeframe = tf;
+            showDetail(symbol);
+        }
+
+        function closeDetail() {
+            document.getElementById('detail-panel').classList.remove('active');
+            document.getElementById('overlay').classList.remove('active');
+        }
+
+        function getSignals(stock, i) {
+            const signals = [];
+            const pc = stock.price?.changePct || 0;
+            const vr = (i.volumeAnalysis?.totalVolume || 0) / (i.volumeAnalysis?.averageVolume || 1);
+            if (pc > 3 && vr > 2) signals.push('✅ BREAKOUT: +3% with 2x volume');
+            else if (pc < -3 && vr > 2) signals.push('⚠️ DISTRIBUTION: -3% with volume');
+            const fn = (i.foreignFlow?.netValue || 0) / 1000000000;
+            if (fn > 1) signals.push('✅ Foreign buying >1B');
+            else if (fn < -1) signals.push('⚠️ Foreign selling >1B');
+            return signals.length ? signals.join('<br>') : 'No strong signals';
+        }
+
+        function getMacroThesis(symbol) {
+            const theses = {
+                'BBCA': 'Banking leader benefiting from digital transformation. Rising interest rates improving NIM. Strongest ROE in sector justifies premium valuation.',
+                'BBRI': 'Microfinance dominance with unmatched rural reach. Government MSME support creating tailwinds. Best value among big banks at 16.8x P/E.',
+                'TLKM': 'Digital infra leader with data center growth. 5G rollout expanding ARPU. Defensive characteristics with 14.2x P/E.',
+                'ASII': 'Automotive recovery play. Hybrid strategy bridging to EV transition. 12.5x P/E attractive for market leader.',
+                'INKP': 'DEEP VALUE at 8.5x P/E. Global paper demand recovery. Sustainable packaging trend supports long-term demand.',
+                'ADRO': 'Energy security priority extending coal demand. Strong cash flows supporting dividends. 6.8x P/E offers value.',
+                'AMMN': 'Copper/gold exposure with global EV transition. New mine ramping production. Premium valuation supported by 22% ROE.',
+                'ANTM': 'Nickel exposure for EV battery demand. Integration with IMIP industrial park. Recovery play on commodity prices.'
+            };
+            return theses[symbol] || 'Analyze sector trends and competitive position for investment thesis.';
+        }
+
+        function getFundamentals(symbol) {
+            const data = {
+                'BBCA': {s: 'Banking', mc: 850, pe: 18.5, roe: 18.2, a: 'Premium valuation justified by 18.2% ROE and digital leadership'},
+                'BBRI': {s: 'Banking', mc: 620, pe: 16.8, roe: 19.5, a: 'CHEAPEST big bank with HIGHEST 19.5% ROE. Best value play.'},
+                'TLKM': {s: 'Telecom', mc: 280, pe: 14.2, roe: 22.1, a: 'Defensive at 14.2x P/E with 22% ROE. Data center growth story.'},
+                'ASII': {s: 'Automotive', mc: 240, pe: 12.5, roe: 15.8, a: 'Recovery play at 12.5x P/E. Hybrid strategy de-risks EV transition.'},
+                'INKP': {s: 'Paper', mc: 45, pe: 8.5, roe: 12.3, a: 'DEEP VALUE at 8.5x P/E (sector avg 12x). Recovery story.'},
+                'ADRO': {s: 'Coal', mc: 120, pe: 6.8, roe: 28.4, a: 'High ROE 28.4% generating massive cash. 6.8x P/E too cheap.'},
+                'AMMN': {s: 'Mining', mc: 180, pe: 22.4, roe: 25.6, a: 'Copper exposure for EV demand. 25.6% ROE supports premium.'}
+            };
+            const f = data[symbol] || {s: 'General', mc: 50, pe: 15, roe: 15, a: 'Standard metrics'};
+            return `
+                <div><strong>${f.s}</strong> | Market Cap: Rp ${f.mc}T</div>
+                <div style="margin-top: 8px;">P/E: ${f.pe}x | ROE: ${f.roe}%</div>
+                <div style="color: #22c55e; margin-top: 8px;">${f.a}</div>
+            `;
+        }
+
+        function getCostBasis(stock, analysis) {
+            const price = stock.price?.current || 0;
+            const costSection = analysis?.sections?.find(s => s.title.includes('COST BASIS'));
+            if (costSection) {
+                return costSection.content.slice(0, 5).join('<br>');
+            }
+            return `
+                <div>Current: Rp ${Math.floor(price).toLocaleString()}</div>
+                <div>Support: Rp ${Math.floor(price * 0.97).toLocaleString()}</div>
+                <div>Resistance: Rp ${Math.floor(price * 1.03).toLocaleString()}</div>
+            `;
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
