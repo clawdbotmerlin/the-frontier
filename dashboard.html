@@ -348,6 +348,9 @@
                     ${['1D', '1W', '1M', '1Y'].map(tf => `<button class="timeframe-btn ${currentTimeframe === tf ? 'active' : ''}" onclick="setTimeframe('${tf}', '${symbol}')">${tf}</button>`).join('')}
                 </div>
 
+                <!-- Volume Analysis -->
+                ${renderVolumeAnalysis(i)}
+
                 <!-- Price Action -->
                 <div class="price-action-box">
                     <div style="font-weight: 700; color: #22c55e; margin-bottom: 8px;">📈 PRICE ACTION</div>
@@ -462,12 +465,48 @@
             const signals = [];
             const pc = stock.price?.changePct || 0;
             const vr = (i.volumeAnalysis?.totalVolume || 0) / (i.volumeAnalysis?.averageVolume || 1);
+            
+            // Volume Spike Detection
+            const vs = i.volumeAnalysis?.volumeSpike;
+            if (vs && vs.detected) {
+                if (vs.signal === 'STEALTH_ACCUMULATION') {
+                    signals.push(`🎯 <strong>STEALTH ACCUMULATION:</strong> Volume ${vs.ratio}x avg (20d) - Possible bandar accumulation without news`);
+                } else if (vs.signal === 'BREAKOUT') {
+                    signals.push(`🚀 <strong>VOLUME BREAKOUT:</strong> Volume ${vs.ratio}x avg - Check for news catalyst`);
+                }
+            }
+            
+            // Price + Volume signals
             if (pc > 3 && vr > 2) signals.push('✅ BREAKOUT: +3% with 2x volume');
             else if (pc < -3 && vr > 2) signals.push('⚠️ DISTRIBUTION: -3% with volume');
+            
+            // Foreign flow
             const fn = (i.foreignFlow?.netValue || 0) / 1000000000;
             if (fn > 1) signals.push('✅ Foreign buying >1B');
             else if (fn < -1) signals.push('⚠️ Foreign selling >1B');
+            
             return signals.length ? signals.join('<br>') : 'No strong signals';
+        }
+        
+        // New function to render Volume Analysis section
+        function renderVolumeAnalysis(i) {
+            const vs = i.volumeAnalysis?.volumeSpike;
+            if (!vs) return '';
+            
+            const spikeClass = vs.severity === 'EXTREME' ? 'color: #ef4444;' : vs.severity === 'HIGH' ? 'color: #eab308;' : 'color: #22c55e;';
+            
+            return `
+                <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                    <div style="font-weight: 700; color: #60a5fa; margin-bottom: 12px;">📊 VOLUME ANALYSIS</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px;">
+                        <div>20-Day Avg: <strong>${(vs.avgVolume20d/1000000).toFixed(1)}M</strong></div>
+                        <div>Today's Volume: <strong>${(vs.currentVolume/1000000).toFixed(1)}M</strong></div>
+                        <div>Spike Ratio: <strong style="${spikeClass}">${vs.ratio}x</strong></div>
+                        <div>Signal: <strong>${vs.signal.replace(/_/g, ' ')}</strong></div>
+                    </div>
+                    ${vs.detected ? `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #334155; font-size: 11px; color: #94a3b8;">${vs.description}</div>` : ''}
+                </div>
+            `;
         }
 
         function getMacroThesis(symbol) {

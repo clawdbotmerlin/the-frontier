@@ -244,12 +244,50 @@ async function generateBandarIndicators(symbol, priceData) {
     const foreignNet = foreignBuyVolume - foreignSellVolume;
     const foreignNetValue = foreignBuyValue - foreignSellValue;
     
-    // Get historical volume for comparison
+    // Get historical volume for comparison (20 days)
     const histVolumeData = await getHistoricalVolumeData(symbol, 20);
     let avgVolume = volume;
-    if (histVolumeData.length > 1) {
+    let volumeSpike = null;
+    
+    if (histVolumeData.length > 5) {
       const volumes = histVolumeData.map(v => parseInt(v.total_volume));
       avgVolume = volumes.reduce((a, b) => a + b, 0) / volumes.length;
+      
+      // Calculate volume spike ratio
+      const currentTotalVolume = totalBuyVolume + totalSellVolume;
+      const spikeRatio = avgVolume > 0 ? currentTotalVolume / avgVolume : 1;
+      
+      // Detect unusual volume spike (2x-5x above average = stealth accumulation signal)
+      if (spikeRatio >= 2.0 && spikeRatio < 5.0) {
+        volumeSpike = {
+          detected: true,
+          ratio: parseFloat(spikeRatio.toFixed(2)),
+          severity: spikeRatio >= 4.0 ? 'EXTREME' : spikeRatio >= 3.0 ? 'HIGH' : 'MODERATE',
+          signal: 'STEALTH_ACCUMULATION',
+          description: `Volume ${spikeRatio.toFixed(1)}x above 20-day average without news catalyst`,
+          avgVolume20d: Math.round(avgVolume),
+          currentVolume: currentTotalVolume
+        };
+      } else if (spikeRatio >= 5.0) {
+        volumeSpike = {
+          detected: true,
+          ratio: parseFloat(spikeRatio.toFixed(2)),
+          severity: 'EXTREME',
+          signal: 'BREAKOUT',
+          description: `Volume ${spikeRatio.toFixed(1)}x above average - possible news-driven or distribution`,
+          avgVolume20d: Math.round(avgVolume),
+          currentVolume: currentTotalVolume
+        };
+      } else {
+        volumeSpike = {
+          detected: false,
+          ratio: parseFloat(spikeRatio.toFixed(2)),
+          severity: 'NONE',
+          signal: 'NORMAL',
+          avgVolume20d: Math.round(avgVolume),
+          currentVolume: currentTotalVolume
+        };
+      }
     }
     
     // Calculate large lot transactions (above 1B IDR or 100k shares)
@@ -329,7 +367,8 @@ async function generateBandarIndicators(symbol, priceData) {
       volumeAnalysis: {
         totalVolume: totalBuyVolume + totalSellVolume,
         averageVolume: Math.round(avgVolume),
-        volumeVsAvg: avgVolume > 0 ? (((totalBuyVolume + totalSellVolume) / avgVolume) - 1) * 100 : 0
+        volumeVsAvg: avgVolume > 0 ? (((totalBuyVolume + totalSellVolume) / avgVolume) - 1) * 100 : 0,
+        volumeSpike: volumeSpike || { detected: false, ratio: 1.0, severity: 'NONE', signal: 'NORMAL' }
       },
       totals: {
         buyVolume: totalBuyVolume,
@@ -387,7 +426,8 @@ function generateBasicIndicators(symbol, priceData) {
     volumeAnalysis: {
       totalVolume: volume,
       averageVolume: volume,
-      volumeVsAvg: 0
+      volumeVsAvg: 0,
+      volumeSpike: { detected: false, ratio: 1.0, severity: 'NONE', signal: 'NORMAL' }
     },
     totals: {
       buyVolume: 0,
