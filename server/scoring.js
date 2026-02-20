@@ -151,6 +151,42 @@ export function calculateBandarScore(stockData, indicators) {
     }
   }
   
+  // Foreign Flow Streak Detection (NEW)
+  const fs = indicators.foreignStreak;
+  if (fs && fs.detected) {
+    if (fs.signal === 'STRONG_BULLISH') {
+      score += 18;
+      factors.push(`Strong foreign streak: ${fs.consecutiveDays} days buying, Rp ${(fs.totalNetValue/1000000000).toFixed(1)}B inflow`);
+    } else if (fs.signal === 'BULLISH') {
+      score += 12;
+      factors.push(`Foreign buying streak: ${fs.consecutiveDays} days`);
+    } else if (fs.signal === 'MODERATE_BULLISH') {
+      score += 6;
+      factors.push(`Foreign accumulation: ${fs.consecutiveDays} days`);
+    } else if (fs.signal === 'STRONG_BEARISH') {
+      score -= 18;
+      factors.push(`⚠️ Foreign selling streak: ${Math.abs(fs.consecutiveDays)} days, Rp ${Math.abs(fs.totalNetValue/1000000000).toFixed(1)}B outflow`);
+    } else if (fs.signal === 'BEARISH') {
+      score -= 12;
+      factors.push(`Foreign selling streak: ${Math.abs(fs.consecutiveDays)} days`);
+    }
+  }
+  
+  // Broker Concentration Detection (NEW)
+  const bc = indicators.brokerConcentration;
+  if (bc && bc.detected) {
+    if (bc.signal === 'HIGH_CONCENTRATION') {
+      score += 15;
+      factors.push(`Bandar concentration: ${bc.dominantBrokers[0]?.code} dominating for ${bc.concentrationDays} days`);
+    } else if (bc.signal === 'COORDINATED_BUYING') {
+      score += 12;
+      factors.push(`Coordinated buying: ${bc.dominantBrokers.map(b => b.code).join('+')} active together`);
+    } else if (bc.signal === 'MODERATE_CONCENTRATION') {
+      score += 6;
+      factors.push(`Broker accumulation detected`);
+    }
+  }
+  
   score = Math.max(20, Math.min(80, score));
   
   let signal;

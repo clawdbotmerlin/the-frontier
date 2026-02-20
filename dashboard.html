@@ -381,6 +381,33 @@
                     </div>
                 </div>
 
+                <!-- Foreign Flow Streak & Broker Concentration -->
+                <div class="two-column">
+                    ${i.foreignStreak?.detected ? `
+                    <div class="section">
+                        <div class="section-title">🌍 FOREIGN FLOW STREAK</div>
+                        <div style="font-size: 13px;">
+                            <div style="margin-bottom: 8px;"><strong style="color: ${i.foreignStreak.consecutiveDays > 0 ? '#22c55e' : '#ef4444'};">${i.foreignStreak.signal.replace(/_/g, ' ')}</strong></div>
+                            <div>Consecutive Days: <strong>${Math.abs(i.foreignStreak.consecutiveDays)}</strong></div>
+                            <div>Total Net: <strong>Rp ${(Math.abs(i.foreignStreak.totalNetValue)/1000000000).toFixed(1)}B ${i.foreignStreak.totalNetValue > 0 ? 'inflow' : 'outflow'}</strong></div>
+                            <div style="margin-top: 8px; font-size: 11px; color: #94a3b8;">${i.foreignStreak.description}</div>
+                        </div>
+                    </div>
+                    ` : '<div class="section"><div class="section-title">🌍 FOREIGN FLOW STREAK</div><p style="color: #64748b;">No sustained foreign flow pattern detected</p></div>'}
+                    
+                    ${i.brokerConcentration?.detected ? `
+                    <div class="section">
+                        <div class="section-title">🎯 BROKER CONCENTRATION</div>
+                        <div style="font-size: 13px;">
+                            <div style="margin-bottom: 8px;"><strong style="color: #a78bfa;">${i.brokerConcentration.signal.replace(/_/g, ' ')}</strong></div>
+                            <div>Dominant: <strong>${i.brokerConcentration.dominantBrokers.map(b => b.code).join('+')}</strong></div>
+                            <div>Active For: <strong>${i.brokerConcentration.concentrationDays}+ days</strong></div>
+                            <div style="margin-top: 8px; font-size: 11px; color: #94a3b8;">${i.brokerConcentration.description}</div>
+                        </div>
+                    </div>
+                    ` : '<div class="section"><div class="section-title">🎯 BROKER CONCENTRATION</div><p style="color: #64748b;">No significant broker concentration</p></div>'}
+                </div>
+
                 <!-- Executive Summary (BELOW) -->
                 <div class="executive-summary">
                     <h3 style="color: #60a5fa; margin-bottom: 12px;">📝 Executive Summary</h3>
@@ -495,6 +522,30 @@
                     signals.push(`🛡️ <strong>HIDDEN FLOOR:</strong> ${bai.ratio}x bid support keeping price flat`);
                 } else if (bai.signal === 'DISTRIBUTION') {
                     signals.push(`⚠️ <strong>DISTRIBUTION:</strong> ${(1/bai.ratio).toFixed(1)}x selling pressure - Caution!`);
+                }
+            }
+            
+            // Foreign Flow Streak
+            const fs = i.foreignStreak;
+            if (fs && fs.detected) {
+                if (fs.signal === 'STRONG_BULLISH') {
+                    signals.push(`🌊 <strong>STRONG FOREIGN INFLOW:</strong> ${fs.consecutiveDays} day streak, Rp ${(fs.totalNetValue/1000000000).toFixed(1)}B total`);
+                } else if (fs.signal === 'BULLISH') {
+                    signals.push(`💰 <strong>FOREIGN BUYING STREAK:</strong> ${fs.consecutiveDays} consecutive days`);
+                } else if (fs.signal === 'STRONG_BEARISH') {
+                    signals.push(`🚨 <strong>FOREIGN SELLING ALERT:</strong> ${Math.abs(fs.consecutiveDays)} day streak, Rp ${Math.abs(fs.totalNetValue/1000000000).toFixed(1)}B outflow!`);
+                } else if (fs.signal === 'BEARISH') {
+                    signals.push(`⚠️ <strong>FOREIGN SELLING:</strong> ${Math.abs(fs.consecutiveDays)} consecutive days of outflow`);
+                }
+            }
+            
+            // Broker Concentration
+            const bc = i.brokerConcentration;
+            if (bc && bc.detected) {
+                if (bc.signal === 'HIGH_CONCENTRATION') {
+                    signals.push(`🎪 <strong>BANDAR DOMINANCE:</strong> ${bc.dominantBrokers[0]?.code} controlling for ${bc.concentrationDays}+ days`);
+                } else if (bc.signal === 'COORDINATED_BUYING') {
+                    signals.push(`🤝 <strong>COORDINATED ACCUMULATION:</strong> ${bc.dominantBrokers.map(b => b.code).join('+')} acting together`);
                 }
             }
             
