@@ -185,6 +185,9 @@ async function getForeignFlowHistory(symbol, days = 10) {
     `, [symbol]);
 
     return result.rows;
+  } catch (error) {
+    console.error(`Error getting foreign flow history for ${symbol}:`, error.message);
+    return []; // Return empty array on error
   } finally {
     client.release();
   }
@@ -211,6 +214,9 @@ async function getBrokerConcentrationHistory(symbol, days = 10) {
     `, [symbol]);
 
     return result.rows;
+  } catch (error) {
+    console.error(`Error getting broker concentration history for ${symbol}:`, error.message);
+    return []; // Return empty array on error
   } finally {
     client.release();
   }
@@ -471,7 +477,6 @@ async function generateBandarIndicators(symbol, priceData) {
     const sidChange = Math.floor((Math.random() - 0.5) * 200);
     
     // Indicator #4: Foreign Net Buy Flow (multi-day streak detection)
-    const foreignFlowHistory = await getForeignFlowHistory(symbol, 10);
     let foreignStreak = {
       detected: false,
       consecutiveDays: 0,
@@ -480,56 +485,61 @@ async function generateBandarIndicators(symbol, priceData) {
       description: 'No sustained foreign flow pattern'
     };
     
-    if (foreignFlowHistory.length >= 5) {
-      let consecutiveBuys = 0;
-      let totalNet = 0;
+    try {
+      const foreignFlowHistory = await getForeignFlowHistory(symbol, 10);
       
-      for (const day of foreignFlowHistory) {
-        const netValue = parseFloat(day.foreign_net_value) || 0;
-        if (netValue > 0) {
-          consecutiveBuys++;
-          totalNet += netValue;
-        } else {
-          break; // Streak broken
-        }
-      }
-      
-      if (consecutiveBuys >= 5) {
-        foreignStreak = {
-          detected: true,
-          consecutiveDays: consecutiveBuys,
-          totalNetValue: Math.round(totalNet),
-          signal: consecutiveBuys >= 10 ? 'STRONG_BULLISH' : consecutiveBuys >= 7 ? 'BULLISH' : 'MODERATE_BULLISH',
-          description: `Foreign buying streak: ${consecutiveBuys} consecutive days, total Rp ${(totalNet/1000000000).toFixed(1)}B net inflow`
-        };
-      } else if (consecutiveBuys === 0) {
-        // Check for sell streak
-        let consecutiveSells = 0;
-        let totalSellNet = 0;
+      if (foreignFlowHistory.length >= 5) {
+        let consecutiveBuys = 0;
+        let totalNet = 0;
+        
         for (const day of foreignFlowHistory) {
           const netValue = parseFloat(day.foreign_net_value) || 0;
-          if (netValue < 0) {
-            consecutiveSells++;
-            totalSellNet += netValue;
+          if (netValue > 0) {
+            consecutiveBuys++;
+            totalNet += netValue;
           } else {
-            break;
+            break; // Streak broken
           }
         }
         
-        if (consecutiveSells >= 5) {
+        if (consecutiveBuys >= 5) {
           foreignStreak = {
             detected: true,
-            consecutiveDays: -consecutiveSells,
-            totalNetValue: Math.round(totalSellNet),
-            signal: consecutiveSells >= 10 ? 'STRONG_BEARISH' : 'BEARISH',
-            description: `Foreign selling streak: ${consecutiveSells} consecutive days, total Rp ${Math.abs(totalSellNet/1000000000).toFixed(1)}B net outflow`
+            consecutiveDays: consecutiveBuys,
+            totalNetValue: Math.round(totalNet),
+            signal: consecutiveBuys >= 10 ? 'STRONG_BULLISH' : consecutiveBuys >= 7 ? 'BULLISH' : 'MODERATE_BULLISH',
+            description: `Foreign buying streak: ${consecutiveBuys} consecutive days, total Rp ${(totalNet/1000000000).toFixed(1)}B net inflow`
           };
+        } else if (consecutiveBuys === 0) {
+          // Check for sell streak
+          let consecutiveSells = 0;
+          let totalSellNet = 0;
+          for (const day of foreignFlowHistory) {
+            const netValue = parseFloat(day.foreign_net_value) || 0;
+            if (netValue < 0) {
+              consecutiveSells++;
+              totalSellNet += netValue;
+            } else {
+              break;
+            }
+          }
+          
+          if (consecutiveSells >= 5) {
+            foreignStreak = {
+              detected: true,
+              consecutiveDays: -consecutiveSells,
+              totalNetValue: Math.round(totalSellNet),
+              signal: consecutiveSells >= 10 ? 'STRONG_BEARISH' : 'BEARISH',
+              description: `Foreign selling streak: ${consecutiveSells} consecutive days, total Rp ${Math.abs(totalSellNet/1000000000).toFixed(1)}B net outflow`
+            };
+          }
         }
       }
+    } catch (error) {
+      console.error(`Error calculating foreign streak for ${symbol}:`, error.message);
     }
     
     // Indicator #5: Broker Flow Concentration (1-3 brokers dominating)
-    const brokerHistory = await getBrokerConcentrationHistory(symbol, 10);
     let brokerConcentration = {
       detected: false,
       dominantBrokers: [],
@@ -538,39 +548,42 @@ async function generateBandarIndicators(symbol, priceData) {
       description: 'No significant broker concentration'
     };
     
-    if (brokerHistory.length > 0) {
-      // Group by date and find top 3 brokers per day
-      const dailyTops = {};
-      for (const record of brokerHistory) {
-        const date = record.date;
-        if (!dailyTops[date]) dailyTops[date] = [];
-        dailyTops[date].push({
-          code: record.code,
-          netValue: parseFloat(record.net_value) || 0
-        });
-      }
+    try {
+      const brokerHistory = await getBrokerConcentrationHistory(symbol, 10);
       
-      // Sort each day by net value and get top 3
-      const dates = Object.keys(dailyTops).sort().slice(-7); // Last 7 days
-      const brokerAppearanceCount = {};
-      
-      for (const date of dates) {
-        const sorted = dailyTops[date].sort((a, b) => b.netValue - a.netValue);
-        const top3 = sorted.slice(0, 3).filter(b => b.netValue > 0);
-        
-        for (const broker of top3) {
-          if (!brokerAppearanceCount[broker.code]) {
-            brokerAppearanceCount[broker.code] = { count: 0, totalNet: 0 };
-          }
-          brokerAppearanceCount[broker.code].count++;
-          brokerAppearanceCount[broker.code].totalNet += broker.netValue;
+      if (brokerHistory.length > 0) {
+        // Group by date and find top 3 brokers per day
+        const dailyTops = {};
+        for (const record of brokerHistory) {
+          const date = record.date;
+          if (!dailyTops[date]) dailyTops[date] = [];
+          dailyTops[date].push({
+            code: record.code,
+            netValue: parseFloat(record.net_value) || 0
+          });
         }
-      }
-      
-      // Find brokers appearing 5+ days
-      const dominantBrokers = Object.entries(brokerAppearanceCount)
-        .filter(([code, data]) => data.count >= 5)
-        .sort((a, b) => b[1].count - a[1].count)
+        
+        // Sort each day by net value and get top 3
+        const dates = Object.keys(dailyTops).sort().slice(-7); // Last 7 days
+        const brokerAppearanceCount = {};
+        
+        for (const date of dates) {
+          const sorted = dailyTops[date].sort((a, b) => b.netValue - a.netValue);
+          const top3 = sorted.slice(0, 3).filter(b => b.netValue > 0);
+          
+          for (const broker of top3) {
+            if (!brokerAppearanceCount[broker.code]) {
+              brokerAppearanceCount[broker.code] = { count: 0, totalNet: 0 };
+            }
+            brokerAppearanceCount[broker.code].count++;
+            brokerAppearanceCount[broker.code].totalNet += broker.netValue;
+          }
+        }
+        
+        // Find brokers appearing 5+ days
+        const dominantBrokers = Object.entries(brokerAppearanceCount)
+          .filter(([code, data]) => data.count >= 5)
+          .sort((a, b) => b[1].count - a[1].count)
         .slice(0, 3);
       
       if (dominantBrokers.length > 0) {
@@ -588,6 +601,8 @@ async function generateBandarIndicators(symbol, priceData) {
           description: `${dominantBrokers.length} broker(s) dominating buy side for ${topBroker[1].count}+ days - ${dominantBrokers.map(b => b[0]).join('+')} controlling flow`
         };
       }
+    } catch (error) {
+      console.error(`Error calculating broker concentration for ${symbol}:`, error.message);
     }
 
     return {
