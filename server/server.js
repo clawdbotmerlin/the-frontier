@@ -265,8 +265,10 @@ async function generateBandarIndicators(symbol, priceData) {
   const closePrice = priceData.close || 0;
   
   try {
+    console.log(`[DEBUG] Starting generateBandarIndicators for ${symbol}`);
     // Get real broker transactions
     const txData = await getBrokerTransactionsFromDB(symbol);
+    console.log(`[DEBUG] Got txData for ${symbol}: ${txData ? txData.transactions?.length : 0} transactions`);
     
     if (!txData || !txData.transactions || txData.transactions.length === 0) {
       console.log(`No transaction data found for ${symbol}, falling back to basic data`);
@@ -695,8 +697,11 @@ async function generateBandarIndicators(symbol, priceData) {
         netValue: totalBuyValue - totalSellValue
       }
     };
+    console.log(`[DEBUG] Successfully generated indicators for ${symbol} with all new fields`);
+    return result;
   } catch (error) {
-    console.error(`Error generating bandar indicators for ${symbol}:`, error);
+    console.error(`[DEBUG ERROR] generateBandarIndicators failed for ${symbol}:`, error.message);
+    console.error(error.stack);
     return generateBasicIndicators(symbol, priceData);
   }
 }
