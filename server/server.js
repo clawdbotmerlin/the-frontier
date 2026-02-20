@@ -639,7 +639,7 @@ async function generateBandarIndicators(symbol, priceData) {
       console.error(`Error calculating broker concentration for ${symbol}:`, error.message);
     }
 
-    return {
+    const result = {
       symbol,
       date: txDate,
       foreignFlow: {
@@ -696,6 +696,18 @@ async function generateBandarIndicators(symbol, priceData) {
         netValue: totalBuyValue - totalSellValue
       }
     };
+    
+    // DEBUG: Log what we're returning
+    console.log(`[DEBUG] Returning indicators for ${symbol}:`, {
+      hasVolumeDryUp: 'volumeDryUp' in result.volumeAnalysis,
+      hasBidAskImbalance: 'bidAskImbalance' in result.volumeAnalysis,
+      hasForeignStreak: 'foreignStreak' in result,
+      hasBrokerConcentration: 'brokerConcentration' in result,
+      hasQuantitative: 'quantitative' in result,
+      hasPriceAction: 'priceAction' in result
+    });
+    
+    return result;
   } catch (error) {
     console.error(`[DEBUG ERROR] generateBandarIndicators failed for ${symbol}:`, error.message);
     console.error(error.stack);
