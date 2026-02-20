@@ -146,6 +146,10 @@ async function getBrokerTransactionsFromDB(symbol, date) {
 async function getHistoricalVolumeData(symbol, days = 20) {
   const client = await pool.connect();
   try {
+    // Get the latest available date for this stock
+    const latestDate = await getLatestDataDate(symbol);
+    if (!latestDate) return [];
+    
     const result = await client.query(`
       SELECT 
         DATE(bt.time) as date,
@@ -153,13 +157,36 @@ async function getHistoricalVolumeData(symbol, days = 20) {
       FROM broker_transactions bt
       JOIN stocks s ON bt.stock_id = s.id
       WHERE s.symbol = $1
-        AND bt.time >= CURRENT_DATE - INTERVAL '${days} days'
+        AND DATE(bt.time) <= $2
+        AND DATE(bt.time) > $2 - INTERVAL '${days} days'
       GROUP BY DATE(bt.time)
       ORDER BY date DESC
       LIMIT ${days}
-    `, [symbol]);
+    `, [symbol, latestDate]);
 
     return result.rows;
+  } catch (error) {
+    console.error(`Error getting historical volume for ${symbol}:`, error.message);
+    return [];
+  } finally {
+    client.release();
+  }
+}
+
+// Helper: Get the latest available date for a stock
+async function getLatestDataDate(symbol) {
+  const client = await pool.connect();
+  try {
+    const result = await client.query(`
+      SELECT MAX(DATE(bt.time)) as latest_date
+      FROM broker_transactions bt
+      JOIN stocks s ON bt.stock_id = s.id
+      WHERE s.symbol = $1
+    `, [symbol]);
+    return result.rows[0]?.latest_date;
+  } catch (error) {
+    console.error(`Error getting latest date for ${symbol}:`, error.message);
+    return null;
   } finally {
     client.release();
   }
@@ -169,6 +196,10 @@ async function getHistoricalVolumeData(symbol, days = 20) {
 async function getForeignFlowHistory(symbol, days = 10) {
   const client = await pool.connect();
   try {
+    // Get the latest available date for this stock
+    const latestDate = await getLatestDataDate(symbol);
+    if (!latestDate) return [];
+    
     const result = await client.query(`
       SELECT 
         DATE(bt.time) as date,
@@ -177,12 +208,13 @@ async function getForeignFlowHistory(symbol, days = 10) {
       JOIN brokers b ON bt.broker_id = b.id
       JOIN stocks s ON bt.stock_id = s.id
       WHERE s.symbol = $1
-        AND bt.time >= CURRENT_DATE - INTERVAL '${days} days'
+        AND DATE(bt.time) <= $2
+        AND DATE(bt.time) > $2 - INTERVAL '${days} days'
         AND b.type = 'foreign'
       GROUP BY DATE(bt.time)
       ORDER BY date DESC
       LIMIT ${days}
-    `, [symbol]);
+    `, [symbol, latestDate]);
 
     return result.rows;
   } catch (error) {
@@ -197,6 +229,10 @@ async function getForeignFlowHistory(symbol, days = 10) {
 async function getBrokerConcentrationHistory(symbol, days = 10) {
   const client = await pool.connect();
   try {
+    // Get the latest available date for this stock
+    const latestDate = await getLatestDataDate(symbol);
+    if (!latestDate) return [];
+    
     const result = await client.query(`
       SELECT 
         DATE(bt.time) as date,
@@ -208,10 +244,11 @@ async function getBrokerConcentrationHistory(symbol, days = 10) {
       JOIN brokers b ON bt.broker_id = b.id
       JOIN stocks s ON bt.stock_id = s.id
       WHERE s.symbol = $1
-        AND bt.time >= CURRENT_DATE - INTERVAL '${days} days'
+        AND DATE(bt.time) <= $2
+        AND DATE(bt.time) > $2 - INTERVAL '${days} days'
       GROUP BY DATE(bt.time), b.code
       ORDER BY date DESC, ABS(SUM(bt.net_value)) DESC
-    `, [symbol]);
+    `, [symbol, latestDate]);
 
     return result.rows;
   } catch (error) {
@@ -306,7 +343,8 @@ async function generateBandarIndicators(symbol, priceData) {
     let avgVolume = volume;
     let volumeSpike = null;
     
-    if (histVolumeData.length > 5) {
+    // Lowered threshold: need 3+ days (was 5+)
+    if (histVolumeData.length > 3) {
       const volumes = histVolumeData.map(v => parseInt(v.total_volume));
       avgVolume = volumes.reduce((a, b) => a + b, 0) / volumes.length;
       
@@ -314,24 +352,24 @@ async function generateBandarIndicators(symbol, priceData) {
       const currentTotalVolume = totalBuyVolume + totalSellVolume;
       const spikeRatio = avgVolume > 0 ? currentTotalVolume / avgVolume : 1;
       
-      // Detect unusual volume spike (2x-5x above average = stealth accumulation signal)
-      if (spikeRatio >= 2.0 && spikeRatio < 5.0) {
+      // Detect unusual volume spike - lowered threshold to 1.5x (was 2x)
+      if (spikeRatio >= 1.5 && spikeRatio < 3.0) {
         volumeSpike = {
           detected: true,
           ratio: parseFloat(spikeRatio.toFixed(2)),
-          severity: spikeRatio >= 4.0 ? 'EXTREME' : spikeRatio >= 3.0 ? 'HIGH' : 'MODERATE',
+          severity: spikeRatio >= 2.5 ? 'HIGH' : 'MODERATE',
           signal: 'STEALTH_ACCUMULATION',
-          description: `Volume ${spikeRatio.toFixed(1)}x above 20-day average without news catalyst`,
+          description: `Volume ${spikeRatio.toFixed(1)}x above avg - Possible bandar accumulation`,
           avgVolume20d: Math.round(avgVolume),
           currentVolume: currentTotalVolume
         };
-      } else if (spikeRatio >= 5.0) {
+      } else if (spikeRatio >= 3.0) {
         volumeSpike = {
           detected: true,
           ratio: parseFloat(spikeRatio.toFixed(2)),
           severity: 'EXTREME',
           signal: 'BREAKOUT',
-          description: `Volume ${spikeRatio.toFixed(1)}x above average - possible news-driven or distribution`,
+          description: `Volume ${spikeRatio.toFixed(1)}x above avg - News-driven or distribution`,
           avgVolume20d: Math.round(avgVolume),
           currentVolume: currentTotalVolume
         };
@@ -346,43 +384,39 @@ async function generateBandarIndicators(symbol, priceData) {
         };
       }
       
-      // Volume Dry-Up (VDU) Detection
-      // Detects low volume periods followed by sudden surge
-      // Pattern: 5+ days of below-average volume, then sudden spike
+      // Volume Dry-Up (VDU) Detection - lowered to 5 days (was 10)
       let volumeDryUp = null;
-      if (volumes.length >= 10) {
-        // Analyze last 10 days
-        const recentVolumes = volumes.slice(-10);
-        const recentAvg = recentVolumes.slice(0, 5).reduce((a, b) => a + b, 0) / 5;
+      if (volumes.length >= 5) {
+        const recentVolumes = volumes.slice(-5);
+        const recentAvg = recentVolumes.slice(0, 3).reduce((a, b) => a + b, 0) / 3;
         
-        // Check for dry-up period (low volume days)
-        const dryUpDays = recentVolumes.slice(0, 5).filter(v => v < recentAvg * 0.7).length;
-        const isDryUp = dryUpDays >= 3; // 3+ days of low volume
+        // Check for dry-up - lowered to 2 days (was 3)
+        const dryUpDays = recentVolumes.slice(0, 3).filter(v => v < recentAvg * 0.7).length;
+        const isDryUp = dryUpDays >= 2;
         
-        // Check for sudden surge after dry-up
-        const surgeDetected = spikeRatio >= 1.5 && isDryUp;
+        const surgeDetected = spikeRatio >= 1.3 && isDryUp;
         
         if (isDryUp && surgeDetected) {
           volumeDryUp = {
             detected: true,
             signal: 'VDU_BREAKOUT',
             severity: 'HIGH',
-            description: `Volume dry-up (${dryUpDays} low-volume days) followed by ${spikeRatio.toFixed(1)}x surge - bandar accumulation complete`,
+            description: `Dry-up (${dryUpDays} days) + ${spikeRatio.toFixed(1)}x surge - accumulation complete`,
             dryUpDays: dryUpDays,
             dryUpVolume: Math.round(recentAvg),
             breakoutVolume: currentTotalVolume,
-            confidence: Math.min(95, 60 + (dryUpDays * 8) + (spikeRatio * 5))
+            confidence: Math.min(95, 50 + (dryUpDays * 15) + (spikeRatio * 10))
           };
         } else if (isDryUp) {
           volumeDryUp = {
             detected: true,
             signal: 'VDU_ACCUMULATING',
             severity: 'MODERATE',
-            description: `Volume dry-up detected (${dryUpDays} days) - possible quiet accumulation phase`,
+            description: `Dry-up phase (${dryUpDays} days) - quiet accumulation`,
             dryUpDays: dryUpDays,
             dryUpVolume: Math.round(recentAvg),
             breakoutVolume: currentTotalVolume,
-            confidence: Math.min(80, 40 + (dryUpDays * 8))
+            confidence: Math.min(80, 30 + (dryUpDays * 15))
           };
         } else {
           volumeDryUp = {
@@ -411,31 +445,28 @@ async function generateBandarIndicators(symbol, priceData) {
     const bidAskRatio = totalAskVolume > 0 ? totalBidVolume / totalAskVolume : 1;
     const priceChange = priceData.changePct || 0;
     
-    // Detect stealth accumulation: high bid ratio even when price flat or down
-    if (bidAskRatio > 1.3 && priceChange <= 1) {
+    // Detect stealth accumulation: lowered threshold to 1.15x (was 1.3x)
+    if (bidAskRatio > 1.15 && priceChange <= 2) {
       bidAskImbalance.detected = true;
       bidAskImbalance.ratio = parseFloat(bidAskRatio.toFixed(2));
       bidAskImbalance.buyPressure = Math.round((bidAskRatio - 1) * 100);
       
-      if (priceChange < -1 && bidAskRatio > 1.5) {
-        // Strong buying despite price drop = aggressive accumulation
+      if (priceChange < -0.5 && bidAskRatio > 1.3) {
         bidAskImbalance.signal = 'STEALTH_ACCUMULATION';
         bidAskImbalance.severity = 'HIGH';
-        bidAskImbalance.description = `Aggressive buying (${bidAskRatio.toFixed(1)}x bid/ask) despite -${Math.abs(priceChange).toFixed(1)}% price drop - Bandar absorbing retail selling`;
-      } else if (Math.abs(priceChange) <= 1) {
-        // High bid ratio with flat price = hidden support
+        bidAskImbalance.description = `Aggressive buying (${bidAskRatio.toFixed(1)}x bid/ask) despite -${Math.abs(priceChange).toFixed(1)}% price drop - Bandar absorbing`;
+      } else if (Math.abs(priceChange) <= 2) {
         bidAskImbalance.signal = 'HIDDEN_SUPPORT';
-        bidAskImbalance.severity = bidAskRatio > 1.8 ? 'HIGH' : 'MODERATE';
-        bidAskImbalance.description = `Strong bid support (${bidAskRatio.toFixed(1)}x) keeping price flat - Possible floor defense`;
+        bidAskImbalance.severity = bidAskRatio > 1.5 ? 'HIGH' : 'MODERATE';
+        bidAskImbalance.description = `Bid support (${bidAskRatio.toFixed(1)}x) keeping price stable - Floor defense`;
       }
-    } else if (bidAskRatio < 0.7 && priceChange >= -1) {
-      // More selling pressure even with flat/up price = distribution
+    } else if (bidAskRatio < 0.85 && priceChange >= -2) {
       bidAskImbalance.detected = true;
       bidAskImbalance.ratio = parseFloat(bidAskRatio.toFixed(2));
       bidAskImbalance.buyPressure = Math.round((bidAskRatio - 1) * 100);
       bidAskImbalance.signal = 'DISTRIBUTION';
       bidAskImbalance.severity = 'HIGH';
-      bidAskImbalance.description = `Heavy selling pressure (${(1/bidAskRatio).toFixed(1)}x ask/bid) - Possible distribution underway`;
+      bidAskImbalance.description = `Selling pressure (${(1/bidAskRatio).toFixed(1)}x ask/bid) - Distribution`;
     }
     
     // Calculate large lot transactions (above 1B IDR or 100k shares)
@@ -502,12 +533,13 @@ async function generateBandarIndicators(symbol, priceData) {
           }
         }
         
-        if (consecutiveBuys >= 5) {
+        // Lowered thresholds: 2+ days for streak (more realistic with data gaps)
+      if (consecutiveBuys >= 2) {
           foreignStreak = {
             detected: true,
             consecutiveDays: consecutiveBuys,
             totalNetValue: Math.round(totalNet),
-            signal: consecutiveBuys >= 10 ? 'STRONG_BULLISH' : consecutiveBuys >= 7 ? 'BULLISH' : 'MODERATE_BULLISH',
+            signal: consecutiveBuys >= 5 ? 'STRONG_BULLISH' : consecutiveBuys >= 3 ? 'BULLISH' : 'MODERATE_BULLISH',
             description: `Foreign buying streak: ${consecutiveBuys} consecutive days, total Rp ${(totalNet/1000000000).toFixed(1)}B net inflow`
           };
         } else if (consecutiveBuys === 0) {
@@ -524,12 +556,12 @@ async function generateBandarIndicators(symbol, priceData) {
             }
           }
           
-          if (consecutiveSells >= 5) {
+          if (consecutiveSells >= 2) {
             foreignStreak = {
               detected: true,
               consecutiveDays: -consecutiveSells,
               totalNetValue: Math.round(totalSellNet),
-              signal: consecutiveSells >= 10 ? 'STRONG_BEARISH' : 'BEARISH',
+              signal: consecutiveSells >= 5 ? 'STRONG_BEARISH' : 'BEARISH',
               description: `Foreign selling streak: ${consecutiveSells} consecutive days, total Rp ${Math.abs(totalSellNet/1000000000).toFixed(1)}B net outflow`
             };
           }
@@ -580,9 +612,9 @@ async function generateBandarIndicators(symbol, priceData) {
           }
         }
         
-        // Find brokers appearing 5+ days
+        // Find brokers appearing 2+ days (lowered from 5)
         const dominantBrokers = Object.entries(brokerAppearanceCount)
-          .filter(([code, data]) => data.count >= 5)
+          .filter(([code, data]) => data.count >= 2)
           .sort((a, b) => b[1].count - a[1].count)
         .slice(0, 3);
       
@@ -596,7 +628,7 @@ async function generateBandarIndicators(symbol, priceData) {
             totalNetValue: Math.round(data.totalNet)
           })),
           concentrationDays: topBroker[1].count,
-          signal: dominantBrokers.length === 1 && topBroker[1].count >= 7 ? 'HIGH_CONCENTRATION' : 
+          signal: dominantBrokers.length === 1 && topBroker[1].count >= 4 ? 'HIGH_CONCENTRATION' : 
                   dominantBrokers.length >= 2 ? 'COORDINATED_BUYING' : 'MODERATE_CONCENTRATION',
           description: `${dominantBrokers.length} broker(s) dominating buy side for ${topBroker[1].count}+ days - ${dominantBrokers.map(b => b[0]).join('+')} controlling flow`
         };
