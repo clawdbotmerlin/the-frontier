@@ -221,6 +221,51 @@ export function calculateBandarScore(stockData, indicators) {
     }
   }
   
+  // Quantitative Indicators (#11-14) (NEW)
+  const qi = indicators.quantitative;
+  if (qi) {
+    // #11: MFI
+    if (qi.mfi?.value > 50 && qi.mfi?.value < 70) {
+      score += 5;
+      factors.push(`MFI ${qi.mfi.value}: Positive money flow momentum`);
+    } else if (qi.mfi?.value >= 70) {
+      score -= 5;
+      factors.push(`MFI ${qi.mfi.value}: Overbought caution`);
+    } else if (qi.mfi?.value < 30) {
+      score += 8;
+      factors.push(`MFI ${qi.mfi.value}: Oversold - potential bounce`);
+    }
+    
+    // #12: OBV Divergence
+    if (qi.obv?.divergence?.detected) {
+      if (qi.obv.divergence.signal === 'BULLISH_DIVERGENCE') {
+        score += 10;
+        factors.push(`OBV Divergence: Volume leading price - Smart money accumulating`);
+      } else if (qi.obv.divergence.signal === 'BEARISH_DIVERGENCE') {
+        score -= 10;
+        factors.push(`OBV Warning: Rising price on falling volume`);
+      }
+    }
+    
+    // #13: VWAP
+    if (qi.vwap?.reclaim?.signal === 'ABOVE_VWAP') {
+      score += 6;
+      factors.push(`Above VWAP: ${qi.vwap.priceVsVwap}% - Institutional buyers in control`);
+    } else if (qi.vwap?.reclaim?.signal === 'BELOW_VWAP') {
+      score -= 6;
+      factors.push(`Below VWAP: ${qi.vwap.priceVsVwap}% - Weak institutional interest`);
+    }
+    
+    // #14: CMF
+    if (qi.cmf?.value > 0.1) {
+      score += 8;
+      factors.push(`CMF ${qi.cmf.value}: Strong buying pressure`);
+    } else if (qi.cmf?.value < -0.1) {
+      score -= 8;
+      factors.push(`CMF ${qi.cmf.value}: Selling pressure dominant`);
+    }
+  }
+  
   score = Math.max(20, Math.min(80, score));
   
   let signal;

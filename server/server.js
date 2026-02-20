@@ -637,6 +637,7 @@ async function generateBandarIndicators(symbol, priceData) {
       foreignStreak: foreignStreak,
       brokerConcentration: brokerConcentration,
       priceAction: generatePriceActionIndicators(symbol, priceData, volumeAnalysis, brokerSummary, txDate),
+      quantitative: generateQuantitativeIndicators(symbol, priceData, brokerSummary, volumeAnalysis, histVolumeData),
       totals: {
         buyVolume: totalBuyVolume,
         buyValue: totalBuyValue,
@@ -650,6 +651,106 @@ async function generateBandarIndicators(symbol, priceData) {
     console.error(`Error generating bandar indicators for ${symbol}:`, error);
     return generateBasicIndicators(symbol, priceData);
   }
+}
+
+// Quantitative Indicators (#11-14)
+function generateQuantitativeIndicators(symbol, priceData, brokerSummary, volumeAnalysis, histVolumeData) {
+  const currentPrice = priceData.close || 0;
+  const highPrice = priceData.high || currentPrice;
+  const lowPrice = priceData.low || currentPrice;
+  const volume = priceData.volume || 0;
+  
+  // #11: Simplified Money Flow Index (MFI) using typical price * volume
+  const typicalPrice = (currentPrice + highPrice + lowPrice) / 3;
+  const rawMoneyFlow = typicalPrice * volume;
+  
+  // Estimate MFI based on money flow trend (simplified)
+  let mfi = 50; // Neutral
+  const volumeTrend = volumeAnalysis.volumeVsAvg || 0;
+  const priceTrend = priceData.change_pct || 0;
+  
+  if (volumeTrend > 20 && priceTrend > 0) {
+    mfi = Math.min(80, 50 + (volumeTrend * 0.5) + priceTrend);
+  } else if (volumeTrend > 20 && priceTrend < 0) {
+    mfi = Math.max(20, 50 - (volumeTrend * 0.5) + priceTrend);
+  }
+  
+  const mfiSignal = mfi > 70 ? 'OVERBOUGHT' : mfi < 30 ? 'OVERSOLD' : mfi > 50 ? 'BULLISH' : 'BEARISH';
+  
+  // #12: On-Balance Volume (OBV) - simplified calculation
+  let obv = volume;
+  if (priceTrend > 0) obv = volume;
+  else if (priceTrend < 0) obv = -volume;
+  
+  // OBV divergence detection
+  const obvDivergence = {
+    detected: false,
+    signal: 'NEUTRAL',
+    description: 'No OBV divergence detected'
+  };
+  
+  if (priceTrend < 0 && volumeTrend > 10) {
+    obvDivergence.detected = true;
+    obvDivergence.signal = 'BULLISH_DIVERGENCE';
+    obvDivergence.description = 'Price down but volume increasing - Accumulation underway';
+  } else if (priceTrend > 0 && volumeTrend < -10) {
+    obvDivergence.detected = true;
+    obvDivergence.signal = 'BEARISH_DIVERGENCE';
+    obvDivergence.description = 'Price up but volume declining - Distribution possible';
+  }
+  
+  // #13: VWAP (Volume Weighted Average Price) - simplified
+  const totalVolume = volumeAnalysis.totalVolume || volume;
+  const totalValue = brokerSummary.reduce((sum, b) => sum + b.buyValue + b.sellValue, 0);
+  const vwap = totalVolume > 0 ? totalValue / totalVolume / 100 : currentPrice; // Adjust for lot size
+  
+  const vwapReclaim = {
+    detected: false,
+    signal: 'NEUTRAL',
+    description: 'Price around VWAP'
+  };
+  
+  const priceVsVwap = ((currentPrice - vwap) / vwap) * 100;
+  if (priceVsVwap > 2) {
+    vwapReclaim.detected = true;
+    vwapReclaim.signal = 'ABOVE_VWAP';
+    vwapReclaim.description = `Price ${priceVsVwap.toFixed(1)}% above VWAP - Bullish control`;
+  } else if (priceVsVwap < -2) {
+    vwapReclaim.detected = true;
+    vwapReclaim.signal = 'BELOW_VWAP';
+    vwapReclaim.description = `Price ${Math.abs(priceVsVwap).toFixed(1)}% below VWAP - Bearish pressure`;
+  }
+  
+  // #14: Chaikin Money Flow (CMF) - simplified using ADL concept
+  // CMF = Sum((Close - Low) - (High - Close)) / (High - Low) * Volume) / Sum(Volume)
+  const moneyFlowMultiplier = ((currentPrice - lowPrice) - (highPrice - currentPrice)) / (highPrice - lowPrice || 1);
+  const cmf = moneyFlowMultiplier; // Simplified single-period CMF
+  
+  const cmfSignal = cmf > 0.1 ? 'BULLISH' : cmf < -0.1 ? 'BEARISH' : 'NEUTRAL';
+  
+  return {
+    mfi: {
+      value: Math.round(mfi),
+      signal: mfiSignal,
+      description: `MFI: ${Math.round(mfi)} - ${mfiSignal}`
+    },
+    obv: {
+      value: Math.round(obv / 1000000), // In millions
+      divergence: obvDivergence,
+      description: obvDivergence.detected ? obvDivergence.description : `OBV: ${Math.round(obv/1000000)}M - Following price trend`
+    },
+    vwap: {
+      value: Math.round(vwap),
+      priceVsVwap: parseFloat(priceVsVwap.toFixed(2)),
+      reclaim: vwapReclaim,
+      description: vwapReclaim.description
+    },
+    cmf: {
+      value: parseFloat(cmf.toFixed(3)),
+      signal: cmfSignal,
+      description: `CMF: ${cmf.toFixed(3)} - ${cmfSignal} money flow`
+    }
+  };
 }
 
 // Price Action Indicators (#6-10)

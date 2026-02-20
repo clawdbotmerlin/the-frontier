@@ -443,6 +443,37 @@
                     </div>
                 </div>
 
+                <!-- Quantitative Indicators -->
+                <div class="section">
+                    <div class="section-title">📊 QUANTITATIVE INDICATORS</div>
+                    <div style="font-size: 13px; line-height: 1.8;">
+                        ${i.quantitative ? `
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div style="padding: 12px; background: rgba(59, 130, 246, 0.1); border-radius: 8px;">
+                                    <div style="font-weight: 600; color: #60a5fa; margin-bottom: 4px;">MFI</div>
+                                    <div style="font-size: 20px; font-weight: 700;">${i.quantitative.mfi?.value}</div>
+                                    <div style="font-size: 11px; color: ${i.quantitative.mfi?.signal === 'OVERBOUGHT' ? '#ef4444' : i.quantitative.mfi?.signal === 'OVERSOLD' ? '#22c55e' : '#94a3b8'};">${i.quantitative.mfi?.signal}</div>
+                                </div>
+                                <div style="padding: 12px; background: rgba(167, 139, 250, 0.1); border-radius: 8px;">
+                                    <div style="font-weight: 600; color: #a78bfa; margin-bottom: 4px;">OBV</div>
+                                    <div style="font-size: 20px; font-weight: 700;">${i.quantitative.obv?.value}M</div>
+                                    <div style="font-size: 11px; color: ${i.quantitative.obv?.divergence?.detected ? (i.quantitative.obv?.divergence?.signal === 'BULLISH_DIVERGENCE' ? '#22c55e' : '#ef4444') : '#94a3b8'};">${i.quantitative.obv?.divergence?.signal?.replace(/_/g, ' ') || 'Following Trend'}</div>
+                                </div>
+                                <div style="padding: 12px; background: rgba(34, 197, 94, 0.1); border-radius: 8px;">
+                                    <div style="font-weight: 600; color: #22c55e; margin-bottom: 4px;">VWAP</div>
+                                    <div style="font-size: 16px; font-weight: 700;">Rp ${i.quantitative.vwap?.value?.toLocaleString()}</div>
+                                    <div style="font-size: 11px; color: ${i.quantitative.vwap?.priceVsVwap > 0 ? '#22c55e' : '#ef4444'};">${i.quantitative.vwap?.priceVsVwap > 0 ? '+' : ''}${i.quantitative.vwap?.priceVsVwap}%</div>
+                                </div>
+                                <div style="padding: 12px; background: rgba(244, 114, 182, 0.1); border-radius: 8px;">
+                                    <div style="font-weight: 600; color: #f472b6; margin-bottom: 4px;">CMF</div>
+                                    <div style="font-size: 20px; font-weight: 700;">${i.quantitative.cmf?.value}</div>
+                                    <div style="font-size: 11px; color: ${i.quantitative.cmf?.signal === 'BULLISH' ? '#22c55e' : i.quantitative.cmf?.signal === 'BEARISH' ? '#ef4444' : '#94a3b8'};">${i.quantitative.cmf?.signal}</div>
+                                </div>
+                            </div>
+                        ` : '<p style="color: #64748b;">Quantitative indicators not available</p>'}
+                    </div>
+                </div>
+
                 <!-- Executive Summary (BELOW) -->
                 <div class="executive-summary">
                     <h3 style="color: #60a5fa; margin-bottom: 12px;">📝 Executive Summary</h3>
@@ -598,6 +629,25 @@
                 }
                 if (pa.gapUpBreakout?.detected) {
                     signals.push(`🚀 <strong>GAP UP BREAKOUT:</strong> ${pa.gapUpBreakout.gapPct}% gap with volume - Rally starting!`);
+                }
+            }
+            
+            // Quantitative Indicators
+            const qi = i.quantitative;
+            if (qi) {
+                if (qi.mfi?.value < 30) {
+                    signals.push(`📉 <strong>MFI OVERSOLD:</strong> ${qi.mfi.value} - Potential bounce incoming`);
+                } else if (qi.mfi?.value > 70) {
+                    signals.push(`📈 <strong>MFI OVERBOUGHT:</strong> ${qi.mfi.value} - Consider taking profits`);
+                }
+                if (qi.obv?.divergence?.detected && qi.obv?.divergence?.signal === 'BULLISH_DIVERGENCE') {
+                    signals.push(`📊 <strong>OBV DIVERGENCE:</strong> Volume leading price - Smart money in!`);
+                }
+                if (qi.vwap?.reclaim?.signal === 'ABOVE_VWAP' && qi.vwap?.priceVsVwap > 3) {
+                    signals.push(`🎯 <strong>VWAP BULLISH:</strong> ${qi.vwap.priceVsVwap}% above VWAP - Strong control`);
+                }
+                if (qi.cmf?.value > 0.15) {
+                    signals.push(`💪 <strong>STRONG CMF:</strong> ${qi.cmf.value} - Heavy buying pressure`);
                 }
             }
             
