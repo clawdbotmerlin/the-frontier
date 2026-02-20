@@ -486,6 +486,18 @@
                 }
             }
             
+            // Bid-Ask Imbalance Detection
+            const bai = i.volumeAnalysis?.bidAskImbalance;
+            if (bai && bai.detected) {
+                if (bai.signal === 'STEALTH_ACCUMULATION') {
+                    signals.push(`🎯 <strong>STEALTH ACCUMULATION:</strong> ${bai.ratio}x bid/ask while price down - Bandar absorbing selling!`);
+                } else if (bai.signal === 'HIDDEN_SUPPORT') {
+                    signals.push(`🛡️ <strong>HIDDEN FLOOR:</strong> ${bai.ratio}x bid support keeping price flat`);
+                } else if (bai.signal === 'DISTRIBUTION') {
+                    signals.push(`⚠️ <strong>DISTRIBUTION:</strong> ${(1/bai.ratio).toFixed(1)}x selling pressure - Caution!`);
+                }
+            }
+            
             // Price + Volume signals
             if (pc > 3 && vr > 2) signals.push('✅ BREAKOUT: +3% with 2x volume');
             else if (pc < -3 && vr > 2) signals.push('⚠️ DISTRIBUTION: -3% with volume');
@@ -523,6 +535,25 @@
                 `;
             }
             
+            // Bid-Ask Imbalance
+            const bai = i.volumeAnalysis?.bidAskImbalance;
+            let baiHtml = '';
+            if (bai && bai.detected) {
+                const baiClass = bai.signal === 'DISTRIBUTION' ? 'color: #ef4444;' : bai.severity === 'HIGH' ? 'color: #22c55e;' : 'color: #eab308;';
+                baiHtml = `
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #334155;">
+                        <div style="font-weight: 600; color: #f472b6; margin-bottom: 8px;">⚖️ BID-ASK IMBALANCE</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px;">
+                            <div>Signal: <strong style="${baiClass}">${bai.signal.replace(/_/g, ' ')}</strong></div>
+                            <div>Ratio: <strong>${bai.ratio}x</strong></div>
+                            <div>Buy Pressure: <strong>${bai.buyPressure > 0 ? '+' : ''}${bai.buyPressure}%</strong></div>
+                            <div>Severity: <strong>${bai.severity}</strong></div>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 11px; color: #94a3b8;">${bai.description}</div>
+                    </div>
+                `;
+            }
+            
             return `
                 <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
                     <div style="font-weight: 700; color: #60a5fa; margin-bottom: 12px;">📊 VOLUME ANALYSIS</div>
@@ -534,6 +565,7 @@
                     </div>
                     ${vs.detected ? `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #334155; font-size: 11px; color: #94a3b8;">${vs.description}</div>` : ''}
                     ${vduHtml}
+                    ${baiHtml}
                 </div>
             `;
         }

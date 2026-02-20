@@ -136,6 +136,21 @@ export function calculateBandarScore(stockData, indicators) {
     }
   }
   
+  // Bid-Ask Imbalance Detection (NEW)
+  const bai = volumeAnalysis.bidAskImbalance;
+  if (bai && bai.detected) {
+    if (bai.signal === 'STEALTH_ACCUMULATION') {
+      score += 12;
+      factors.push(`Stealth accumulation: ${bai.ratio}x bid/ask ratio while price down`);
+    } else if (bai.signal === 'HIDDEN_SUPPORT') {
+      score += 8;
+      factors.push(`Hidden support: ${bai.ratio}x bid pressure maintaining floor`);
+    } else if (bai.signal === 'DISTRIBUTION') {
+      score -= 12;
+      factors.push(`Distribution detected: ${(1/bai.ratio).toFixed(1)}x selling pressure`);
+    }
+  }
+  
   score = Math.max(20, Math.min(80, score));
   
   let signal;

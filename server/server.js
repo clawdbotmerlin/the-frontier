@@ -337,6 +337,50 @@ async function generateBandarIndicators(symbol, priceData) {
       }
     }
     
+    // Bid-Ask Volume Imbalance Detection (Indicator #3)
+    // Detects consistently higher bid volume vs ask even when price flat/down
+    const bidAskImbalance = {
+      detected: false,
+      ratio: 1.0,
+      signal: 'NEUTRAL',
+      severity: 'NONE',
+      buyPressure: 0,
+      description: 'No significant bid-ask imbalance detected'
+    };
+    
+    // Calculate bid-ask ratio from broker activity
+    const totalBidVolume = totalBuyVolume;
+    const totalAskVolume = totalSellVolume;
+    const bidAskRatio = totalAskVolume > 0 ? totalBidVolume / totalAskVolume : 1;
+    const priceChange = priceData.changePct || 0;
+    
+    // Detect stealth accumulation: high bid ratio even when price flat or down
+    if (bidAskRatio > 1.3 && priceChange <= 1) {
+      bidAskImbalance.detected = true;
+      bidAskImbalance.ratio = parseFloat(bidAskRatio.toFixed(2));
+      bidAskImbalance.buyPressure = Math.round((bidAskRatio - 1) * 100);
+      
+      if (priceChange < -1 && bidAskRatio > 1.5) {
+        // Strong buying despite price drop = aggressive accumulation
+        bidAskImbalance.signal = 'STEALTH_ACCUMULATION';
+        bidAskImbalance.severity = 'HIGH';
+        bidAskImbalance.description = `Aggressive buying (${bidAskRatio.toFixed(1)}x bid/ask) despite -${Math.abs(priceChange).toFixed(1)}% price drop - Bandar absorbing retail selling`;
+      } else if (Math.abs(priceChange) <= 1) {
+        // High bid ratio with flat price = hidden support
+        bidAskImbalance.signal = 'HIDDEN_SUPPORT';
+        bidAskImbalance.severity = bidAskRatio > 1.8 ? 'HIGH' : 'MODERATE';
+        bidAskImbalance.description = `Strong bid support (${bidAskRatio.toFixed(1)}x) keeping price flat - Possible floor defense`;
+      }
+    } else if (bidAskRatio < 0.7 && priceChange >= -1) {
+      // More selling pressure even with flat/up price = distribution
+      bidAskImbalance.detected = true;
+      bidAskImbalance.ratio = parseFloat(bidAskRatio.toFixed(2));
+      bidAskImbalance.buyPressure = Math.round((bidAskRatio - 1) * 100);
+      bidAskImbalance.signal = 'DISTRIBUTION';
+      bidAskImbalance.severity = 'HIGH';
+      bidAskImbalance.description = `Heavy selling pressure (${(1/bidAskRatio).toFixed(1)}x ask/bid) - Possible distribution underway`;
+    }
+    
     // Calculate large lot transactions (above 1B IDR or 100k shares)
     const largeLotThreshold = 1000000000; // 1 Billion IDR
     const largeLotTransactions = brokerSummary.filter(b => 
@@ -416,7 +460,8 @@ async function generateBandarIndicators(symbol, priceData) {
         averageVolume: Math.round(avgVolume),
         volumeVsAvg: avgVolume > 0 ? (((totalBuyVolume + totalSellVolume) / avgVolume) - 1) * 100 : 0,
         volumeSpike: volumeSpike || { detected: false, ratio: 1.0, severity: 'NONE', signal: 'NORMAL' },
-        volumeDryUp: volumeDryUp || { detected: false, signal: 'NORMAL', severity: 'NONE' }
+        volumeDryUp: volumeDryUp || { detected: false, signal: 'NORMAL', severity: 'NONE' },
+        bidAskImbalance: bidAskImbalance
       },
       totals: {
         buyVolume: totalBuyVolume,
