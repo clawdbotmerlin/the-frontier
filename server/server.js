@@ -288,6 +288,53 @@ async function generateBandarIndicators(symbol, priceData) {
           currentVolume: currentTotalVolume
         };
       }
+      
+      // Volume Dry-Up (VDU) Detection
+      // Detects low volume periods followed by sudden surge
+      // Pattern: 5+ days of below-average volume, then sudden spike
+      let volumeDryUp = null;
+      if (volumes.length >= 10) {
+        // Analyze last 10 days
+        const recentVolumes = volumes.slice(-10);
+        const recentAvg = recentVolumes.slice(0, 5).reduce((a, b) => a + b, 0) / 5;
+        
+        // Check for dry-up period (low volume days)
+        const dryUpDays = recentVolumes.slice(0, 5).filter(v => v < recentAvg * 0.7).length;
+        const isDryUp = dryUpDays >= 3; // 3+ days of low volume
+        
+        // Check for sudden surge after dry-up
+        const surgeDetected = spikeRatio >= 1.5 && isDryUp;
+        
+        if (isDryUp && surgeDetected) {
+          volumeDryUp = {
+            detected: true,
+            signal: 'VDU_BREAKOUT',
+            severity: 'HIGH',
+            description: `Volume dry-up (${dryUpDays} low-volume days) followed by ${spikeRatio.toFixed(1)}x surge - bandar accumulation complete`,
+            dryUpDays: dryUpDays,
+            dryUpVolume: Math.round(recentAvg),
+            breakoutVolume: currentTotalVolume,
+            confidence: Math.min(95, 60 + (dryUpDays * 8) + (spikeRatio * 5))
+          };
+        } else if (isDryUp) {
+          volumeDryUp = {
+            detected: true,
+            signal: 'VDU_ACCUMULATING',
+            severity: 'MODERATE',
+            description: `Volume dry-up detected (${dryUpDays} days) - possible quiet accumulation phase`,
+            dryUpDays: dryUpDays,
+            dryUpVolume: Math.round(recentAvg),
+            breakoutVolume: currentTotalVolume,
+            confidence: Math.min(80, 40 + (dryUpDays * 8))
+          };
+        } else {
+          volumeDryUp = {
+            detected: false,
+            signal: 'NORMAL',
+            severity: 'NONE'
+          };
+        }
+      }
     }
     
     // Calculate large lot transactions (above 1B IDR or 100k shares)
@@ -368,7 +415,8 @@ async function generateBandarIndicators(symbol, priceData) {
         totalVolume: totalBuyVolume + totalSellVolume,
         averageVolume: Math.round(avgVolume),
         volumeVsAvg: avgVolume > 0 ? (((totalBuyVolume + totalSellVolume) / avgVolume) - 1) * 100 : 0,
-        volumeSpike: volumeSpike || { detected: false, ratio: 1.0, severity: 'NONE', signal: 'NORMAL' }
+        volumeSpike: volumeSpike || { detected: false, ratio: 1.0, severity: 'NONE', signal: 'NORMAL' },
+        volumeDryUp: volumeDryUp || { detected: false, signal: 'NORMAL', severity: 'NONE' }
       },
       totals: {
         buyVolume: totalBuyVolume,

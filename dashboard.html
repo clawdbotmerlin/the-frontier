@@ -476,6 +476,16 @@
                 }
             }
             
+            // Volume Dry-Up Detection
+            const vdu = i.volumeAnalysis?.volumeDryUp;
+            if (vdu && vdu.detected) {
+                if (vdu.signal === 'VDU_BREAKOUT') {
+                    signals.push(`🔥 <strong>VDU BREAKOUT:</strong> ${vdu.dryUpDays} days dry-up followed by surge - Bandar accumulation complete!`);
+                } else if (vdu.signal === 'VDU_ACCUMULATING') {
+                    signals.push(`🤐 <strong>VDU PHASE:</strong> Quiet accumulation detected (${vdu.dryUpDays} days low volume)`);
+                }
+            }
+            
             // Price + Volume signals
             if (pc > 3 && vr > 2) signals.push('✅ BREAKOUT: +3% with 2x volume');
             else if (pc < -3 && vr > 2) signals.push('⚠️ DISTRIBUTION: -3% with volume');
@@ -491,9 +501,27 @@
         // New function to render Volume Analysis section
         function renderVolumeAnalysis(i) {
             const vs = i.volumeAnalysis?.volumeSpike;
+            const vdu = i.volumeAnalysis?.volumeDryUp;
             if (!vs) return '';
             
             const spikeClass = vs.severity === 'EXTREME' ? 'color: #ef4444;' : vs.severity === 'HIGH' ? 'color: #eab308;' : 'color: #22c55e;';
+            
+            let vduHtml = '';
+            if (vdu && vdu.detected) {
+                const vduClass = vdu.severity === 'HIGH' ? 'color: #22c55e;' : 'color: #eab308;';
+                vduHtml = `
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #334155;">
+                        <div style="font-weight: 600; color: #a78bfa; margin-bottom: 8px;">🔇 VOLUME DRY-UP (VDU)</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px;">
+                            <div>Signal: <strong style="${vduClass}">${vdu.signal.replace(/_/g, ' ')}</strong></div>
+                            <div>Dry-Up Days: <strong>${vdu.dryUpDays}</strong></div>
+                            <div>Avg Dry Volume: <strong>${(vdu.dryUpVolume/1000000).toFixed(1)}M</strong></div>
+                            <div>Confidence: <strong>${vdu.confidence.toFixed(0)}%</strong></div>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 11px; color: #94a3b8;">${vdu.description}</div>
+                    </div>
+                `;
+            }
             
             return `
                 <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
@@ -505,6 +533,7 @@
                         <div>Signal: <strong>${vs.signal.replace(/_/g, ' ')}</strong></div>
                     </div>
                     ${vs.detected ? `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #334155; font-size: 11px; color: #94a3b8;">${vs.description}</div>` : ''}
+                    ${vduHtml}
                 </div>
             `;
         }

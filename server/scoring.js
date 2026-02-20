@@ -112,6 +112,30 @@ export function calculateBandarScore(stockData, indicators) {
     factors.push('Volume spike + price up');
   }
   
+  // Volume Spike Detection (NEW)
+  const vs = volumeAnalysis.volumeSpike;
+  if (vs && vs.detected) {
+    if (vs.signal === 'STEALTH_ACCUMULATION') {
+      score += 12;
+      factors.push(`Stealth accumulation: ${vs.ratio}x volume spike`);
+    } else if (vs.signal === 'BREAKOUT') {
+      score += 8;
+      factors.push(`Volume breakout: ${vs.ratio}x`);
+    }
+  }
+  
+  // Volume Dry-Up Detection (NEW)
+  const vdu = volumeAnalysis.volumeDryUp;
+  if (vdu && vdu.detected) {
+    if (vdu.signal === 'VDU_BREAKOUT') {
+      score += 15;
+      factors.push(`VDU Breakout: ${vdu.dryUpDays} days dry-up + surge (${vdu.confidence.toFixed(0)}% confidence)`);
+    } else if (vdu.signal === 'VDU_ACCUMULATING') {
+      score += 8;
+      factors.push(`VDU Phase: Quiet accumulation detected (${vdu.dryUpDays} days)`);
+    }
+  }
+  
   score = Math.max(20, Math.min(80, score));
   
   let signal;
