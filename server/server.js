@@ -601,6 +601,7 @@ async function generateBandarIndicators(symbol, priceData) {
           description: `${dominantBrokers.length} broker(s) dominating buy side for ${topBroker[1].count}+ days - ${dominantBrokers.map(b => b[0]).join('+')} controlling flow`
         };
       }
+    }
     } catch (error) {
       console.error(`Error calculating broker concentration for ${symbol}:`, error.message);
     }
