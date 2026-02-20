@@ -6,369 +6,72 @@
     <title>The Frontier - IDX LQ45 Screener</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0a0f1a;
-            color: #e2e8f0;
-            min-height: 100vh;
-        }
-        .header {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            padding: 24px;
-            border-bottom: 1px solid #334155;
-        }
-        .header-content {
-            max-width: 1600px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .header h1 {
-            font-size: 28px;
-            background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0f1a; color: #e2e8f0; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 24px; border-bottom: 1px solid #334155; }
+        .header-content { max-width: 1600px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 28px; background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .container { max-width: 1600px; margin: 0 auto; padding: 24px; }
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .stat-card {
-            background: #1e293b;
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid #334155;
-        }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; }
         .stat-card .label { color: #64748b; font-size: 11px; text-transform: uppercase; }
         .stat-card .value { font-size: 32px; font-weight: bold; margin-top: 8px; }
-        .buy { color: #22c55e; }
-        .sell { color: #ef4444; }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #1e293b;
-            border-radius: 12px;
-            overflow: hidden;
-            font-size: 13px;
-        }
-        th {
-            background: #0f172a;
-            padding: 14px 12px;
-            text-align: left;
-            font-size: 10px;
-            color: #64748b;
-            text-transform: uppercase;
-            cursor: pointer;
-        }
-        th:hover { background: #1e293b; }
-        td {
-            padding: 14px 12px;
-            border-bottom: 1px solid #334155;
-        }
+        .buy { color: #22c55e; } .sell { color: #ef4444; }
+        table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 12px; overflow: hidden; font-size: 13px; }
+        th { background: #0f172a; padding: 14px 12px; text-align: left; font-size: 10px; color: #64748b; text-transform: uppercase; }
+        td { padding: 14px 12px; border-bottom: 1px solid #334155; }
         tr:hover { background: rgba(51, 65, 85, 0.5); }
-        .signal {
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: 600;
-        }
-        
-        .detail-panel {
-            position: fixed;
-            right: 0;
-            top: 0;
-            width: 950px;
-            height: 100vh;
-            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-            border-left: 1px solid #334155;
-            overflow-y: auto;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-        }
+        .signal { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+        .detail-panel { position: fixed; right: 0; top: 0; width: 950px; height: 100vh; background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); border-left: 1px solid #334155; overflow-y: auto; transform: translateX(100%); transition: transform 0.3s ease; z-index: 1000; }
         .detail-panel.active { transform: translateX(0); }
-        .detail-header {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            padding: 24px;
-            border-bottom: 1px solid #334155;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+        .detail-header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 24px; border-bottom: 1px solid #334155; position: sticky; top: 0; z-index: 100; }
         .detail-content { padding: 24px; }
-        
-        .quick-stats {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .quick-stat-card {
-            background: rgba(30, 41, 59, 0.8);
-            padding: 16px;
-            border-radius: 8px;
-            border: 1px solid #334155;
-            text-align: center;
-        }
+        .quick-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+        .quick-stat-card { background: rgba(30, 41, 59, 0.8); padding: 16px; border-radius: 8px; border: 1px solid #334155; text-align: center; }
         .quick-stat-card .value { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
         .quick-stat-card .label { font-size: 11px; color: #64748b; text-transform: uppercase; }
-        
-        .timeframe-selector {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-        .timeframe-btn {
-            padding: 8px 16px;
-            background: #334155;
-            border: none;
-            color: #94a3b8;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-        }
+        .timeframe-selector { display: flex; gap: 8px; margin-bottom: 20px; }
+        .timeframe-btn { padding: 8px 16px; background: #334155; border: none; color: #94a3b8; border-radius: 6px; cursor: pointer; font-size: 12px; }
         .timeframe-btn.active { background: #3b82f6; color: white; }
-        
-        .two-column {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-        
-        .section {
-            background: rgba(30, 41, 59, 0.5);
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid #334155;
-        }
-        .section-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: #60a5fa;
-            margin-bottom: 16px;
-            text-transform: uppercase;
-        }
-        
+        .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        .section { background: rgba(30, 41, 59, 0.5); border-radius: 12px; padding: 20px; border: 1px solid #334155; }
+        .section-title { font-size: 13px; font-weight: 700; color: #60a5fa; margin-bottom: 16px; text-transform: uppercase; }
         .broker-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        .broker-table th {
-            background: rgba(15, 23, 42, 0.8);
-            padding: 8px 6px;
-            font-size: 9px;
-            text-align: left;
-        }
+        .broker-table th { background: rgba(15, 23, 42, 0.8); padding: 8px 6px; font-size: 9px; text-align: left; }
         .broker-table td { padding: 8px 6px; border-bottom: 1px solid #334155; }
-        
-        .tooltip { 
-            position: relative; 
-            cursor: help;
-            display: inline-block;
-        }
-        .tooltip:hover::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #0f172a;
-            color: #fff;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 12px;
-            white-space: nowrap;
-            border: 1px solid #475569;
-            z-index: 99999;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            pointer-events: none;
-        }
-        .tooltip:hover::before {
-            content: '';
-            position: absolute;
-            bottom: 115%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 8px solid transparent;
-            border-top-color: #475569;
-            z-index: 99999;
-        }
-        
-        .executive-summary {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .signal-card {
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            border-left: 4px solid;
-        }
-        .signal-card.bullish {
-            background: rgba(34, 197, 94, 0.1);
-            border-left-color: #22c55e;
-        }
-        .signal-card.bearish {
-            background: rgba(239, 68, 68, 0.1);
-            border-left-color: #ef4444;
-        }
-        .signal-card.neutral {
-            background: rgba(96, 165, 250, 0.1);
-            border-left-color: #60a5fa;
-        }
-        .signal-title {
-            font-weight: 700;
-            margin-bottom: 6px;
-            font-size: 13px;
-        }
-        .signal-reasoning {
-            font-size: 12px;
-            color: #cbd5e1;
-            margin-bottom: 6px;
-            line-height: 1.5;
-        }
-        .signal-implication {
-            font-size: 11px;
-            font-weight: 600;
-        }
-        
-        .status-card {
-            padding: 14px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border-left: 3px solid;
-            background: rgba(15, 23, 42, 0.5);
-        }
-        .status-card.sweet { border-left-color: #22c55e; }
-        .status-card.danger { border-left-color: #ef4444; }
-        .status-card.caution { border-left-color: #eab308; }
-        .status-card.value { border-left-color: #22c55e; }
-        .status-card.early { border-left-color: #60a5fa; }
-        .status-label {
-            font-weight: 700;
-            font-size: 12px;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-        }
-        .status-detail {
-            font-size: 13px;
-            color: #cbd5e1;
-        }
-        
-        .quant-card {
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        .quant-label {
-            font-weight: 600;
-            font-size: 12px;
-            margin-bottom: 4px;
-        }
-        .quant-value {
-            font-size: 20px;
-            font-weight: 700;
-        }
-        .quant-signal {
-            font-size: 11px;
-            margin-top: 2px;
-        }
-        .quant-help {
-            font-size: 10px;
-            color: #64748b;
-            margin-top: 4px;
-            font-style: italic;
-        }
-        
-        /* Key factor colors */
-        .key-factor-bullish {
-            color: #22c55e;
-            border-left: 2px solid #22c55e;
-        }
-        .key-factor-bearish {
-            color: #ef4444;
-            border-left: 2px solid #ef4444;
-        }
-        .key-factor-neutral {
-            color: #94a3b8;
-            border-left: 2px solid #475569;
-        }
-        
-        /* RSI Card Styles */
-        .rsi-card {
-            padding: 14px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            background: rgba(15, 23, 42, 0.5);
-            border-left: 3px solid #a855f7;
-        }
-        .rsi-title {
-            font-weight: 700;
-            font-size: 12px;
-            color: #a855f7;
-            margin-bottom: 6px;
-        }
-        .rsi-desc {
-            font-size: 12px;
-            color: #cbd5e1;
-            line-height: 1.5;
-        }
-        
-        .close-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: #94a3b8;
-            font-size: 20px;
-            cursor: pointer;
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-        }
-        
-        .overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            z-index: 999;
-        }
+        .tooltip { position: relative; cursor: help; display: inline-block; }
+        .tooltip:hover::after { content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 12px; white-space: nowrap; border: 1px solid #475569; z-index: 99999; box-shadow: 0 10px 25px rgba(0,0,0,0.5); pointer-events: none; }
+        .executive-summary { background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .signal-card { padding: 16px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid; }
+        .signal-card.bullish { background: rgba(34, 197, 94, 0.1); border-left-color: #22c55e; }
+        .signal-card.bearish { background: rgba(239, 68, 68, 0.1); border-left-color: #ef4444; }
+        .status-card { padding: 14px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid; background: rgba(15, 23, 42, 0.5); }
+        .status-card.sweet { border-left-color: #22c55e; } .status-card.danger { border-left-color: #ef4444; }
+        .status-label { font-weight: 700; font-size: 12px; margin-bottom: 4px; text-transform: uppercase; }
+        .status-detail { font-size: 13px; color: #cbd5e1; }
+        .redflag-critical { padding: 14px; background: rgba(239, 68, 68, 0.2); border-radius: 8px; margin-bottom: 12px; border-left: 3px solid #ef4444; }
+        .redflag-high { padding: 14px; background: rgba(239, 68, 68, 0.15); border-radius: 8px; margin-bottom: 12px; border-left: 3px solid #ef4444; }
+        .redflag-medium { padding: 14px; background: rgba(234, 179, 8, 0.15); border-radius: 8px; margin-bottom: 12px; border-left: 3px solid #eab308; }
+        .close-btn { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.1); border: none; color: #94a3b8; font-size: 20px; cursor: pointer; width: 36px; height: 36px; border-radius: 8px; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: 999; }
         .overlay.active { display: block; }
-        
-        @media (max-width: 768px) {
-            .detail-panel { width: 100%; }
-            .two-column { grid-template-columns: 1fr; }
-            .stats { grid-template-columns: repeat(2, 1fr); }
-        }
+        .key-factor-bullish { color: #22c55e; border-left: 2px solid #22c55e; }
+        .key-factor-bearish { color: #ef4444; border-left: 2px solid #ef4444; }
+        .key-factor-neutral { color: #94a3b8; border-left: 2px solid #475569; }
+        @media (max-width: 768px) { .detail-panel { width: 100%; } .two-column { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); } }
     </style>
 </head>
 <body>
     <div class="overlay" id="overlay" onclick="closeDetail()"></div>
-    
     <header class="header">
         <div class="header-content">
-            <div>
-                <h1>The Frontier</h1>
-                <p style="color: #94a3b8; font-size: 14px;">Professional IDX LQ45 Screener</p>
-            </div>
+            <div><h1>The Frontier</h1><p style="color: #94a3b8; font-size: 14px;">Professional IDX LQ45 Screener</p></div>
             <button onclick="loadData()" style="padding: 12px 24px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">Refresh</button>
         </div>
     </header>
-
     <div class="container">
         <div id="stats-container"></div>
         <div id="table-container"></div>
     </div>
-
     <div class="detail-panel" id="detail-panel">
         <div class="detail-header">
             <button class="close-btn" onclick="closeDetail()">×</button>
@@ -376,54 +79,45 @@
         </div>
         <div class="detail-content" id="detail-content"></div>
     </div>
-
     <script>
         const API_URL = 'http://68.183.229.3:5000/api';
         let screenerData = [];
         let currentTimeframe = '1D';
         let brokerNameMap = {};
 
-        const priceActionExplanations = {
-            'COORDINATED_BUYING': { meaning: 'Multiple brokers buying simultaneously', reasoning: 'When 3+ top-tier brokers accumulate together, it suggests institutional coordination or shared research conviction.', implication: 'Bullish - institutions are aligned', type: 'bullish' },
-            'DISTRIBUTION_DETECTED': { meaning: 'Heavy selling by multiple brokers', reasoning: 'Broad-based selling across multiple broker codes indicates institutional exit.', implication: 'Bearish - smart money leaving', type: 'bearish' },
-            'BREAKOUT_CONFIRMED': { meaning: 'Price broke resistance on volume', reasoning: 'Clean break above resistance with above-average volume validates the move.', implication: 'Bullish - momentum building', type: 'bullish' },
-            'ACCUMULATION_ZONE': { meaning: 'Price consolidating near broker cost', reasoning: 'Sideways price action near broker average cost suggests institutions are quietly building positions.', implication: 'Bullish - early accumulation phase', type: 'bullish' },
-            'VOLUME_DRY_UP': { meaning: 'Volume declining during consolidation', reasoning: 'Low volume after a decline indicates selling exhaustion.', implication: 'Bullish - sellers exhausted', type: 'bullish' },
-            'STEALTH_ACCUMULATION': { meaning: 'Buying hidden within normal volume', reasoning: 'Large blocks being absorbed without price spikes.', implication: 'Bullish - smart money entering quietly', type: 'bullish' },
-            'RETAIL_FOMO': { meaning: 'Retail investors chasing price', reasoning: 'Sudden SID surge with price chasing often marks tops.', implication: 'Bearish - contrarian sell signal', type: 'bearish' },
-            'BROKER_CONCENTRATION': { meaning: '1-3 brokers controlling majority flow', reasoning: 'High concentration means easier price control.', implication: 'Neutral - depends on broker quality', type: 'neutral' }
-        };
-
-        function getPriceActionExplanation(signal) {
-            return priceActionExplanations[signal] || { meaning: signal.replace(/_/g, ' '), reasoning: 'Technical signal detected.', implication: 'Monitor for confirmation', type: 'neutral' };
-        }
-
-        // Color code key factors
         function colorCodeFactor(text) {
-            const bullishKeywords = ['buying', 'accumulation', 'bullish', 'conviction', 'opportunity', 'sweet spot', 'breakout', 'support', 'value', 'accumulating', 'holding', 'strong'];
+            const bullishKeywords = ['buying', 'accumulation', 'bullish', 'conviction', 'opportunity', 'sweet', 'breakout', 'support', 'value', 'holding', 'strong'];
             const bearishKeywords = ['selling', 'distribution', 'bearish', 'exodus', 'danger', 'exiting', 'fomo', 'weak', 'caution', 'resistance'];
-            
             const lowerText = text.toLowerCase();
             const isBullish = bullishKeywords.some(k => lowerText.includes(k));
             const isBearish = bearishKeywords.some(k => lowerText.includes(k));
-            
             if (isBullish && !isBearish) return 'key-factor-bullish';
             if (isBearish && !isBullish) return 'key-factor-bearish';
             return 'key-factor-neutral';
         }
 
+        // Render Red Flags Section
+        function renderRedFlags(redFlags) {
+            if (!redFlags || !redFlags.hasRedFlags) {
+                return '<p style="color: #22c55e;">✅ No red flags detected</p>';
+            }
+            let html = '<div style="font-size: 13px; line-height: 1.6;">';
+            for (const flag of redFlags.flags) {
+                const cssClass = flag.severity === 'CRITICAL' ? 'redflag-critical' : flag.severity === 'HIGH' ? 'redflag-high' : 'redflag-medium';
+                const icon = flag.severity === 'CRITICAL' ? '🔴' : flag.severity === 'HIGH' ? '🚨' : '⚠️';
+                html += '<div class="' + cssClass + '"><div style="font-weight: 700; margin-bottom: 6px;">' + icon + ' ' + flag.title + ' (' + flag.severity + ')</div><div style="color: #cbd5e1; margin-bottom: 6px;">' + flag.description + '</div><div style="font-size: 11px; font-weight: 600;">→ ' + flag.implication + '</div></div>';
+            }
+            html += '</div>';
+            return html;
+        }
+
         async function loadData() {
             try {
-                const [screenerRes, brokersRes] = await Promise.all([
-                    fetch(`${API_URL}/screener`),
-                    fetch(`${API_URL}/brokers`).catch(() => ({json: () => ({data: {results: []}})}))
-                ]);
+                const [screenerRes, brokersRes] = await Promise.all([fetch(`${API_URL}/screener`), fetch(`${API_URL}/brokers`).catch(() => ({json: () => ({data: {results: []}})}))]);
                 const result = await screenerRes.json();
                 const brokers = await brokersRes.json().catch(() => ({data: {results: []}}));
-                
                 brokerNameMap = {};
                 (brokers.data?.results || []).forEach(b => { brokerNameMap[b.code] = b.name; });
-                
                 if (result.status === 'success') {
                     screenerData = result.data;
                     updateStats();
@@ -436,294 +130,75 @@
         }
 
         function updateStats() {
-            const html = `
-                <div class="stats">
-                    <div class="stat-card"><div class="label">Total</div><div class="value">${screenerData.length}</div></div>
-                    <div class="stat-card"><div class="label">Buy</div><div class="value buy">${screenerData.filter(s => s.signal === 'BUY').length}</div></div>
-                    <div class="stat-card"><div class="label">Hold</div><div class="value" style="color: #eab308;">${screenerData.filter(s => s.signal === 'HOLD').length}</div></div>
-                    <div class="stat-card"><div class="label">Sell</div><div class="value sell">${screenerData.filter(s => s.signal === 'SELL').length}</div></div>
-                </div>
-            `;
+            const html = `<div class="stats"><div class="stat-card"><div class="label">Total</div><div class="value">${screenerData.length}</div></div><div class="stat-card"><div class="label">Buy</div><div class="value buy">${screenerData.filter(s => s.signal === 'BUY' || s.signal === 'STRONG_BUY').length}</div></div><div class="stat-card"><div class="label">Hold</div><div class="value" style="color: #eab308;">${screenerData.filter(s => s.signal === 'HOLD').length}</div></div><div class="stat-card"><div class="label">Reduce/Sell</div><div class="value sell">${screenerData.filter(s => s.signal === 'REDUCE' || s.signal === 'SELL').length}</div></div></div>`;
             document.getElementById('stats-container').innerHTML = html;
         }
 
         function renderTable() {
-            const html = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Stock</th>
-                            <th>Price</th>
-                            <th>1D</th>
-                            <th>1W</th>
-                            <th>1M</th>
-                            <th>Foreign</th>
-                            <th>Score</th>
-                            <th>Signal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${screenerData.map(stock => {
-                            const foreignValue = (stock.indicators?.foreignNetValue || 0) / 1000000000;
-                            const scoreColor = stock.score >= 65 ? '#22c55e' : stock.score >= 45 ? '#eab308' : '#ef4444';
-                            const tf = stock.indicators?.timeframes || {};
-                            const weekChange = tf['1W']?.brokers?.length ? ((tf['1W'].brokers[0].avgBuyPrice || stock.price) - stock.price) / stock.price * 100 : stock.changePct * 0.8;
-                            const monthChange = tf['1M']?.brokers?.length ? ((tf['1M'].brokers[0].avgBuyPrice || stock.price) - stock.price) / stock.price * 100 : stock.changePct * 0.6;
-                            
-                            return `
-                            <tr onclick="showDetail('${stock.symbol}')" style="cursor: pointer;">
-                                <td><strong>${stock.symbol}</strong><br><span style="font-size: 11px; color: #64748b;">${stock.name}</span></td>
-                                <td>Rp ${stock.price?.toLocaleString()}</td>
-                                <td style="color: ${stock.changePct >= 0 ? '#22c55e' : '#ef4444'};">${stock.changePct >= 0 ? '+' : ''}${stock.changePct?.toFixed(1)}%</td>
-                                <td style="color: ${weekChange >= 0 ? '#22c55e' : '#ef4444'};">${weekChange >= 0 ? '+' : ''}${weekChange?.toFixed(1)}%</td>
-                                <td style="color: ${monthChange >= 0 ? '#22c55e' : '#ef4444'};">${monthChange >= 0 ? '+' : ''}${monthChange?.toFixed(1)}%</td>
-                                <td style="color: ${foreignValue > 0 ? '#22c55e' : '#ef4444'};">${foreignValue > 0 ? '+' : ''}${foreignValue.toFixed(2)}B</td>
-                                <td style="color: ${scoreColor}; font-weight: 700;">${stock.score}</td>
-                                <td><span class="signal" style="background: ${stock.signal === 'BUY' ? 'rgba(34,197,94,0.2)' : stock.signal === 'SELL' ? 'rgba(239,68,68,0.2)' : 'rgba(234,179,8,0.2)'}; color: ${stock.signal === 'BUY' ? '#22c55e' : stock.signal === 'SELL' ? '#ef4444' : '#eab308'}">${stock.signal}</span></td>
-                            </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            `;
+            const html = `<table><thead><tr><th>Stock</th><th>Price</th><th>1D</th><th>1W</th><th>1M</th><th>Foreign (1D)</th><th>Score</th><th>Signal</th></tr></thead><tbody>${screenerData.map(stock => {
+                const foreignValue = (stock.indicators?.foreignNetValue || 0) / 1000000000;
+                const scoreColor = stock.score >= 65 ? '#22c55e' : stock.score >= 45 ? '#eab308' : '#ef4444';
+                const tf = stock.indicators?.timeframes || {};
+                const weekChange = tf['1W']?.brokers?.length ? ((tf['1W'].brokers[0].avgBuyPrice || stock.price) - stock.price) / stock.price * 100 : stock.changePct * 0.8;
+                const monthChange = tf['1M']?.brokers?.length ? ((tf['1M'].brokers[0].avgBuyPrice || stock.price) - stock.price) / stock.price * 100 : stock.changePct * 0.6;
+                return `<tr onclick="showDetail('${stock.symbol}')" style="cursor: pointer;"><td><strong>${stock.symbol}</strong><br><span style="font-size: 11px; color: #64748b;">${stock.name}</span></td><td>Rp ${stock.price?.toLocaleString()}</td><td style="color: ${stock.changePct >= 0 ? '#22c55e' : '#ef4444'};">${stock.changePct >= 0 ? '+' : ''}${stock.changePct?.toFixed(1)}%</td><td style="color: ${weekChange >= 0 ? '#22c55e' : '#ef4444'};">${weekChange >= 0 ? '+' : ''}${weekChange?.toFixed(1)}%</td><td style="color: ${monthChange >= 0 ? '#22c55e' : '#ef4444'};">${monthChange >= 0 ? '+' : ''}${monthChange?.toFixed(1)}%</td><td style="color: ${foreignValue > 0 ? '#22c55e' : '#ef4444'};">${foreignValue > 0 ? '+' : ''}${foreignValue.toFixed(2)}B</td><td style="color: ${scoreColor}; font-weight: 700;">${stock.score}</td><td><span class="signal" style="background: ${stock.signal === 'BUY' || stock.signal === 'STRONG_BUY' ? 'rgba(34,197,94,0.2)' : stock.signal === 'SELL' ? 'rgba(239,68,68,0.2)' : 'rgba(234,179,8,0.2)'}; color: ${stock.signal === 'BUY' || stock.signal === 'STRONG_BUY' ? '#22c55e' : stock.signal === 'SELL' ? '#ef4444' : '#eab308'}">${stock.signal}</span></td></tr>`;
+            }).join('')}</tbody></table>`;
             document.getElementById('table-container').innerHTML = html;
         }
 
-        function setTimeframe(tf, symbol) {
-            currentTimeframe = tf;
-            showDetail(symbol);
-        }
+        function setTimeframe(tf, symbol) { currentTimeframe = tf; showDetail(symbol); }
 
         function filterBigDogsByTimeframe(bigDogs, timeframe, indicators) {
             if (timeframe === '1D') return bigDogs;
             const tf = indicators.timeframes?.[timeframe];
             if (tf && tf.brokers) {
                 const tier1Codes = ['YU', 'CC', 'NI', 'GW', 'SQ', 'OD', 'BK', 'AK'];
-                return tf.brokers
-                    .filter(b => tier1Codes.includes(b.code))
-                    .map(b => ({
-                        code: b.code,
-                        name: b.name,
-                        buyVolume: b.buyVolume,
-                        sellVolume: b.sellVolume,
-                        avgBuyPrice: b.avgBuyPrice,
-                        avgSellPrice: b.avgSellPrice,
-                        netValue: b.netValue,
-                        action: b.netValue > 0 ? 'ACCUMULATING' : 'DISTRIBUTING'
-                    }));
+                return tf.brokers.filter(b => tier1Codes.includes(b.code)).map(b => ({ code: b.code, name: b.name, buyVolume: b.buyVolume, sellVolume: b.sellVolume, avgBuyPrice: b.avgBuyPrice, avgSellPrice: b.avgSellPrice, netValue: b.netValue, action: b.netValue > 0 ? 'ACCUMULATING' : 'DISTRIBUTING' }));
             }
             return bigDogs;
         }
 
-        // FIXED: Big Dog table - use absolute net value for display
         function renderBigDogTable(brokers, type) {
             if (!brokers || !brokers.length) return '<p style="color: #64748b;">No activity</p>';
-            return `<table class="broker-table">
-                <thead><tr><th>Broker</th><th>Lots</th><th>Avg Price</th><th>Net Value</th></tr></thead>
-                <tbody>
-                    ${brokers.map(b => {
-                        const lots = type === 'buy' ? b.buyVolume : b.sellVolume;
-                        const price = type === 'buy' ? b.avgBuyPrice : b.avgSellPrice;
-                        // FIXED: Show actual net value - already negative for sellers
-                        const netValue = b.netValue || 0;
-                        const displayValue = Math.abs(netValue);
-                        const tooltip = brokerNameMap[b.code] || b.name || b.code;
-                        return `<tr>
-                            <td><span class="tooltip" data-tooltip="${tooltip}"><strong>${b.code}</strong></span></td>
-                            <td style="color: ${type === 'buy' ? '#22c55e' : '#ef4444'}">${(lots/1000).toFixed(1)}K</td>
-                            <td>Rp ${price?.toLocaleString()}</td>
-                            <td style="color: ${netValue > 0 ? '#22c55e' : '#ef4444'}">${netValue > 0 ? '+' : '-'}${(displayValue/1000000000).toFixed(1)}B</td>
-                        </tr>`;
-                    }).join('')}
-                </tbody>
-            </table>`;
+            return `<table class="broker-table"><thead><tr><th>Broker</th><th>Lots</th><th>Avg Price</th><th>Net Value</th></tr></thead><tbody>${brokers.map(b => {
+                const lots = type === 'buy' ? b.buyVolume : b.sellVolume;
+                const price = type === 'buy' ? b.avgBuyPrice : b.avgSellPrice;
+                const netValue = b.netValue || 0;
+                const displayValue = Math.abs(netValue);
+                const tooltip = brokerNameMap[b.code] || b.name || b.code;
+                return `<tr><td><span class="tooltip" data-tooltip="${tooltip}"><strong>${b.code}</strong></span></td><td style="color: ${type === 'buy' ? '#22c55e' : '#ef4444'}">${(lots/1000).toFixed(1)}K</td><td>Rp ${price?.toLocaleString()}</td><td style="color: ${netValue > 0 ? '#22c55e' : '#ef4444'}">${netValue > 0 ? '+' : '-'}${(displayValue/1000000000).toFixed(1)}B</td></tr>`;
+            }).join('')}</tbody></table>`;
         }
 
         function renderBrokerTable(brokers, type) {
             if (!brokers || !brokers.length) return '<p style="color: #64748b;">No activity</p>';
-            return `<table class="broker-table">
-                <thead><tr><th>Broker</th><th>Total</th><th>Avg</th><th>Net</th></tr></thead>
-                <tbody>
-                    ${brokers.slice(0, 8).map(b => {
-                        const tooltip = brokerNameMap[b.code] || b.name || b.code;
-                        return `<tr>
-                            <td><span class="tooltip" data-tooltip="${tooltip}"><strong>${b.code}</strong></span></td>
-                            <td style="font-weight: 600;">${((b.buyVolume + b.sellVolume)/1000).toFixed(1)}K</td>
-                            <td>Rp ${type === 'buy' ? b.avgBuyPrice?.toLocaleString() : b.avgSellPrice?.toLocaleString()}</td>
-                            <td style="color: ${type === 'buy' ? '#22c55e' : '#ef4444'}">${type === 'buy' ? '+' : ''}${(b.netValue/1000000000).toFixed(1)}B</td>
-                        </tr>`;
-                    }).join('')}
-                </tbody>
-            </table>`;
+            return `<table class="broker-table"><thead><tr><th>Broker</th><th>Total</th><th>Avg</th><th>Net</th></tr></thead><tbody>${brokers.slice(0, 8).map(b => { const tooltip = brokerNameMap[b.code] || b.name || b.code; return `<tr><td><span class="tooltip" data-tooltip="${tooltip}"><strong>${b.code}</strong></span></td><td style="font-weight: 600;">${((b.buyVolume + b.sellVolume)/1000).toFixed(1)}K</td><td>Rp ${type === 'buy' ? b.avgBuyPrice?.toLocaleString() : b.avgSellPrice?.toLocaleString()}</td><td style="color: ${type === 'buy' ? '#22c55e' : '#ef4444'}">${type === 'buy' ? '+' : ''}${(b.netValue/1000000000).toFixed(1)}B</td></tr>`; }).join('')}</tbody></table>`;
         }
 
         function renderBandarmologyAnalysis(band) {
             if (!band) return '';
-            let html = '<div class="section" style="margin-bottom: 20px;">';
-            html += '<div class="section-title">🎯 Bandarmology Setup Analysis</div>';
-            html += '<div style="display: grid; gap: 12px;">';
-            
+            let html = '<div class="section" style="margin-bottom: 20px;"><div class="section-title">🎯 Bandarmology Setup Analysis</div><div style="display: grid; gap: 12px;">';
             if (band.priceVsCost?.detail) {
                 const status = band.priceVsCost.status;
                 const cardClass = status === 'SWEET_SPOT' ? 'sweet' : status === 'DANGER' ? 'danger' : status === 'VALUE' ? 'value' : status === 'CAUTION' ? 'caution' : 'early';
                 const color = status === 'SWEET_SPOT' || status === 'VALUE' ? '#22c55e' : status === 'DANGER' ? '#ef4444' : status === 'CAUTION' ? '#eab308' : '#60a5fa';
                 html += `<div class="status-card ${cardClass}"><div class="status-label" style="color: ${color}">Price vs Broker Cost: ${status}</div><div class="status-detail">${band.priceVsCost.detail}</div></div>`;
             }
-            
             if (band.brokerAccumulation?.detail) {
                 const status = band.brokerAccumulation.status;
                 const color = status === 'STRONG' ? '#22c55e' : status === 'GOOD' ? '#60a5fa' : '#ef4444';
                 html += `<div class="status-card" style="border-left-color: ${color}"><div class="status-label" style="color: ${color}">Broker Accumulation: ${status}</div><div class="status-detail">${band.brokerAccumulation.detail}</div></div>`;
             }
-            
             if (band.stillHolding?.detail) {
                 const status = band.stillHolding.status;
                 const color = status === 'YES' ? '#22c55e' : status === 'NO' ? '#ef4444' : '#eab308';
                 const icon = status === 'YES' ? '✅' : status === 'NO' ? '🚨' : '⚠️';
                 html += `<div class="status-card" style="border-left-color: ${color}; background: ${status === 'NO' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(15, 23, 42, 0.5)'}"><div class="status-label" style="color: ${color}">${icon} Still Holding: ${status}</div><div class="status-detail">${band.stillHolding.detail}</div></div>`;
             }
-            
             if (band.accumulationDuration?.detail) {
                 html += `<div class="status-card" style="border-left-color: #60a5fa"><div class="status-label" style="color: #60a5fa">Accumulation Duration: ${band.accumulationDuration.status}</div><div class="status-detail">${band.accumulationDuration.detail}</div></div>`;
             }
-            
             html += '</div></div>';
-            return html;
-        }
-
-        function renderQuantitative(i) {
-            if (!i.quantitative) return '<p style="color: #64748b;">Quantitative indicators not available</p>';
-            const q = i.quantitative;
-            return `
-                <div class="two-column">
-                    <div class="quant-card" style="background: rgba(59, 130, 246, 0.1);">
-                        <div class="quant-label" style="color: #60a5fa;">MFI</div>
-                        <div class="quant-value" style="color: #e2e8f0;">${q.mfi?.value || 'N/A'}</div>
-                        <div class="quant-signal" style="color: ${q.mfi?.signal === 'OVERBOUGHT' ? '#ef4444' : q.mfi?.signal === 'OVERSOLD' ? '#22c55e' : '#94a3b8'};">${q.mfi?.signal || 'Neutral'}</div>
-                        <div class="quant-help">Money Flow Index</div>
-                    </div>
-                    <div class="quant-card" style="background: rgba(167, 139, 250, 0.1);">
-                        <div class="quant-label" style="color: #a78bfa;">OBV</div>
-                        <div class="quant-value" style="color: #e2e8f0;">${q.obv?.value || 'N/A'}</div>
-                        <div class="quant-signal" style="color: ${q.obv?.divergence?.detected ? (q.obv?.divergence?.signal === 'BULLISH_DIVERGENCE' ? '#22c55e' : '#ef4444') : '#94a3b8'};">${q.obv?.divergence?.signal?.replace(/_/g, ' ') || 'No Divergence'}</div>
-                        <div class="quant-help">On-Balance Volume</div>
-                    </div>
-                    <div class="quant-card" style="background: rgba(34, 197, 94, 0.1);">
-                        <div class="quant-label" style="color: #22c55e;">VWAP</div>
-                        <div class="quant-value" style="color: #e2e8f0; font-size: 16px;">Rp ${q.vwap?.value?.toLocaleString() || 'N/A'}</div>
-                        <div class="quant-signal" style="color: ${(q.vwap?.priceVsVwap || 0) > 0 ? '#22c55e' : '#ef4444'};">${(q.vwap?.priceVsVwap || 0) > 0 ? '+' : ''}${q.vwap?.priceVsVwap}% vs Price</div>
-                        <div class="quant-help">Volume-Weighted Avg Price</div>
-                    </div>
-                    <div class="quant-card" style="background: rgba(244, 114, 182, 0.1);">
-                        <div class="quant-label" style="color: #f472b6;">CMF</div>
-                        <div class="quant-value" style="color: #e2e8f0;">${q.cmf?.value || 'N/A'}</div>
-                        <div class="quant-signal" style="color: ${q.cmf?.signal === 'BULLISH' ? '#22c55e' : q.cmf?.signal === 'BEARISH' ? '#ef4444' : '#94a3b8'};">${q.cmf?.signal || 'Neutral'}</div>
-                        <div class="quant-help">Chaikin Money Flow</div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // RSI Indicators Section
-        function renderRSIIndicators(stock, indicators) {
-            // Calculate mock RSI metrics based on available data
-            const priceChange = stock.price?.changePct || 0;
-            const volumeVsAvg = indicators.volumeAnalysis?.volumeVsAvg || 0;
-            const foreignNet = indicators.foreignFlow?.netValue || 0;
-            
-            // Stock vs IHSG Divergence detection
-            const ihsgChange = -0.5; // Mock IHSG change
-            const divergence = priceChange > 0 && ihsgChange < 0;
-            
-            // Sector relative performance (mock)
-            const sectorPerformance = priceChange - 1.0; // Mock sector comparison
-            const sectorCatchUp = sectorPerformance > 2 && priceChange > 0;
-            
-            // RS Rating (mock calculation)
-            const rsRating = Math.min(100, Math.max(0, 50 + priceChange * 5));
-            const rsImproving = rsRating > 50 && priceChange > 0;
-            
-            let html = '<div style="font-size: 13px; line-height: 1.6;">';
-            
-            // Stock vs IHSG Divergence
-            if (divergence) {
-                html += `
-                    <div class="rsi-card">
-                        <div class="rsi-title">📈 Stock vs IHSG Divergence - BULLISH</div>
-                        <div class="rsi-desc">Stock holds firm or rises (+${priceChange.toFixed(1)}%) while IHSG drops (${ihsgChange}%). <strong>Bandar is defending position</strong> - institutional support detected even in weak market conditions.</div>
-                    </div>
-                `;
-            }
-            
-            // Sector Laggard Catch-Up
-            if (sectorCatchUp) {
-                html += `
-                    <div class="rsi-card">
-                        <div class="rsi-title">🚀 Sector Laggard Catch-Up - ACCUMULATION PHASE</div>
-                        <div class="rsi-desc">Stock underperformed sector for weeks, now suddenly leading (+${sectorPerformance.toFixed(1)}% vs sector). <strong>Late accumulation before rotation</strong> - smart money positioning ahead of sector move.</div>
-                    </div>
-                `;
-            }
-            
-            // RS Rating Improvement
-            if (rsImproving) {
-                const quartile = rsRating > 75 ? 'Top Quartile' : rsRating > 50 ? '2nd Quartile' : 'Bottom Half';
-                html += `
-                    <div class="rsi-card">
-                        <div class="rsi-title">📊 RS Rating Improvement - MOMENTUM BUILDING</div>
-                        <div class="rsi-desc">Relative Strength rank improving to <strong>${rsRating.toFixed(0)}/100 (${quartile})</strong> within recent period. <strong>Strong momentum confirmation</strong> - outperforming broader market.</div>
-                    </div>
-                `;
-            }
-            
-            if (!divergence && !sectorCatchUp && !rsImproving) {
-                html += '<p style="color: #64748b;">No significant RSI indicators detected</p>';
-            }
-            
-            html += '</div>';
-            return html;
-        }
-
-        function renderPriceActionWithExplanations(indicators) {
-            let html = '<div style="font-size: 13px; line-height: 1.6;">';
-            let hasSignals = false;
-            
-            if (indicators.brokerConcentration?.detected) {
-                hasSignals = true;
-                const exp = getPriceActionExplanation('BROKER_CONCENTRATION');
-                const color = exp.type === 'bullish' ? '#22c55e' : exp.type === 'bearish' ? '#ef4444' : '#60a5fa';
-                html += `<div class="signal-card ${exp.type}"><div class="signal-title" style="color: ${color}">📊 ${exp.meaning}</div><div class="signal-reasoning">${exp.reasoning}</div><div class="signal-implication" style="color: ${color}">→ ${exp.implication}</div></div>`;
-            }
-            
-            if (indicators.foreignStreak?.detected && indicators.foreignStreak.consecutiveDays >= 3) {
-                hasSignals = true;
-                const exp = getPriceActionExplanation('COORDINATED_BUYING');
-                html += `<div class="signal-card ${exp.type}"><div class="signal-title" style="color: #22c55e">🤝 ${exp.meaning}</div><div class="signal-reasoning">${exp.reasoning}</div><div class="signal-implication" style="color: #22c55e">→ ${exp.implication}</div></div>`;
-            }
-            
-            if (indicators.volumeAnalysis?.volumeDryUp?.detected) {
-                hasSignals = true;
-                const exp = getPriceActionExplanation('VOLUME_DRY_UP');
-                html += `<div class="signal-card ${exp.type}"><div class="signal-title" style="color: #eab308">📉 ${exp.meaning}</div><div class="signal-reasoning">${exp.reasoning}</div><div class="signal-implication" style="color: #22c55e">→ ${exp.implication}</div></div>`;
-            }
-            
-            if (indicators.sidData?.change > 50) {
-                hasSignals = true;
-                const exp = getPriceActionExplanation('RETAIL_FOMO');
-                html += `<div class="signal-card ${exp.type}"><div class="signal-title" style="color: #ef4444">⚠️ ${exp.meaning}</div><div class="signal-reasoning">${exp.reasoning}</div><div class="signal-implication" style="color: #ef4444">→ ${exp.implication}</div></div>`;
-            }
-            
-            if (indicators.priceAction?.signals?.length) {
-                for (const signal of indicators.priceAction.signals) {
-                    hasSignals = true;
-                    const exp = getPriceActionExplanation(signal);
-                    const color = exp.type === 'bullish' ? '#22c55e' : exp.type === 'bearish' ? '#ef4444' : '#60a5fa';
-                    html += `<div class="signal-card ${exp.type}"><div class="signal-title" style="color: ${color}">🎯 ${exp.meaning}</div><div class="signal-reasoning">${exp.reasoning}</div><div class="signal-implication" style="color: ${color}">→ ${exp.implication}</div></div>`;
-                }
-            }
-            
-            if (!hasSignals) html += '<p style="color: #64748b;">No active price action signals</p>';
-            html += '</div>';
             return html;
         }
 
@@ -734,83 +209,25 @@
                 const icon = colorClass === 'key-factor-bullish' ? '🟢' : colorClass === 'key-factor-bearish' ? '🔴' : '⚪';
                 return `<div class="${colorClass}" style="margin-bottom: 6px; padding-left: 12px; padding-top: 2px; padding-bottom: 2px;">${icon} ${d}</div>`;
             }).join('');
-            
-            return `<div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(59, 130, 246, 0.3);">
-                <div style="font-weight: 600; color: #60a5fa; margin-bottom: 8px;">🎯 Key Factors</div>
-                <div style="font-size: 13px;">${factorsHtml}</div>
-            </div>`;
-        }
-
-        // Broker Holdings Detail - shows which brokers hold majority and for how long
-        function renderBrokerHoldingsDetail(brokerSummary, timeframes) {
-            if (!brokerSummary?.length) return '';
-            
-            // Sort by net value (holding the most)
-            const topHolders = brokerSummary
-                .filter(b => (b.netValue || 0) > 0)
-                .sort((a, b) => b.netValue - a.netValue)
-                .slice(0, 5);
-            
-            if (!topHolders.length) return '<p style="color: #64748b;">No major broker holdings detected</p>';
-            
-            let html = '<div style="font-size: 13px; line-height: 1.8;">';
-            
-            for (const b of topHolders) {
-                const brokerName = brokerNameMap[b.code] || b.name || b.code;
-                const holdingValue = (b.netValue / 1000000000).toFixed(1);
-                const lots = (b.buyVolume / 1000).toFixed(1);
-                const avgPrice = b.avgBuyPrice?.toLocaleString() || 'N/A';
-                
-                // Check duration across timeframes
-                let durationText = 'Recent position';
-                if (timeframes) {
-                    const weekBroker = timeframes['1W']?.brokers?.find(bb => bb.code === b.code);
-                    const monthBroker = timeframes['1M']?.brokers?.find(bb => bb.code === b.code);
-                    
-                    if (monthBroker && monthBroker.netValue > 0) {
-                        durationText = 'Holding for 1+ month - HIGH CONVICTION';
-                    } else if (weekBroker && weekBroker.netValue > 0) {
-                        durationText = 'Holding for 1+ week - Building position';
-                    }
-                }
-                
-                html += `
-                    <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; margin-bottom: 8px; border-left: 3px solid #22c55e;">
-                        <div style="font-weight: 600; color: #22c55e; margin-bottom: 4px;">
-                            <span class="tooltip" data-tooltip="${brokerName}">${b.code}</span> - +${holdingValue}B Net
-                        </div>
-                        <div style="color: #cbd5e1; font-size: 12px;">
-                            📦 ${lots}K lots @ Rp ${avgPrice}<br>
-                            ⏱️ ${durationText}
-                        </div>
-                    </div>
-                `;
-            }
-            
-            html += '</div>';
-            return html;
+            return `<div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(59, 130, 246, 0.3);"><div style="font-weight: 600; color: #60a5fa; margin-bottom: 8px;">🎯 Key Factors</div><div style="font-size: 13px;">${factorsHtml}</div></div>`;
         }
 
         async function showDetail(symbol) {
             const stock = screenerData.find(s => s.symbol === symbol);
             if (!stock) return;
-
             let detailed = stock;
             try {
                 const res = await fetch(`${API_URL}/stock/${symbol}`);
                 const result = await res.json();
                 if (result.status === 'success') detailed = result.data;
             } catch (e) {}
-
             const price = detailed.price;
             const i = detailed.indicators;
             const ca = detailed.comprehensiveAnalysis;
             const band = ca?.bandarmology;
             const reasoning = detailed.reasoning;
-            
             const bigDogsAll = i.bigDogActivity || [];
             const bigDogs = filterBigDogsByTimeframe(bigDogsAll, currentTimeframe, i);
-            
             const tf = i.timeframes?.[currentTimeframe] || { brokers: [], label: 'Current Day' };
             const tfBrokers = tf.brokers || [];
             const buyers = tfBrokers.filter(b => b.netValue > 0).sort((a, b) => b.netValue - a.netValue);
@@ -818,183 +235,31 @@
             const bigDogBuyers = bigDogs.filter(b => b.action === 'ACCUMULATING');
             const bigDogSellers = bigDogs.filter(b => b.action === 'DISTRIBUTING');
 
-            document.getElementById('detail-header-content').innerHTML = `
-                <div style="display: flex; align-items: center; gap: 16px;">
-                    <div>
-                        <h2 style="font-size: 24px; margin: 0;">${detailed.symbol}</h2>
-                        <p style="color: #64748b; margin: 4px 0 0;">${detailed.name}</p>
-                    </div>
-                    <div style="margin-left: auto; text-align: right;">
-                        <div style="font-size: 32px; font-weight: 700;">Rp ${price?.current?.toLocaleString()}</div>
-                        <div style="font-size: 14px; color: ${price?.changePct >= 0 ? '#22c55e' : '#ef4444'};">${price?.changePct >= 0 ? '+' : ''}${price?.changePct?.toFixed(2)}%</div>
-                    </div>
-                </div>
-            `;
+            document.getElementById('detail-header-content').innerHTML = `<div style="display: flex; align-items: center; gap: 16px;"><div><h2 style="font-size: 24px; margin: 0;">${detailed.symbol}</h2><p style="color: #64748b; margin: 4px 0 0;">${detailed.name}</p></div><div style="margin-left: auto; text-align: right;"><div style="font-size: 32px; font-weight: 700;">Rp ${price?.current?.toLocaleString()}</div><div style="font-size: 14px; color: ${price?.changePct >= 0 ? '#22c55e' : '#ef4444'};">${price?.changePct >= 0 ? '+' : ''}${price?.changePct?.toFixed(2)}%</div></div></div>`;
 
-            let html = '';
-            
-            // Quick Stats
-            html += `
-                <div class="quick-stats">
-                    <div class="quick-stat-card"><div class="value ${(i?.foreignFlow?.netValue || 0) > 0 ? 'buy' : 'sell'}">${((i?.foreignFlow?.netValue || 0) / 1000000000).toFixed(1)}B</div><div class="label">Foreign Net</div></div>
-                    <div class="quick-stat-card"><div class="value">${((i?.volumeAnalysis?.totalVolume || 0) / 1000000).toFixed(1)}M</div><div class="label">Volume Today</div></div>
-                    <div class="quick-stat-card"><div class="value">${i?.largeLotTransactions?.count || 0}</div><div class="label">Large Lots</div></div>
-                    <div class="quick-stat-card"><div class="value ${(i?.sidData?.change || 0) >= 0 ? 'buy' : 'sell'}">${(i?.sidData?.change || 0) > 0 ? '+' : ''}${i?.sidData?.change || 0}</div><div class="label">SID Change</div></div>
-                </div>
-            `;
+            let html = `<div class="quick-stats"><div class="quick-stat-card"><div class="value ${(i?.foreignFlow?.netValue || 0) > 0 ? 'buy' : 'sell'}">${((i?.foreignFlow?.netValue || 0) / 1000000000).toFixed(1)}B</div><div class="label">Foreign Net (${currentTimeframe})</div></div><div class="quick-stat-card"><div class="value">${((i?.volumeAnalysis?.totalVolume || 0) / 1000000).toFixed(1)}M</div><div class="label">Volume Today</div></div><div class="quick-stat-card"><div class="value">${i?.largeLotTransactions?.count || 0}</div><div class="label">Large Lots</div></div><div class="quick-stat-card"><div class="value ${(i?.sidData?.change || 0) >= 0 ? 'buy' : 'sell'}">${(i?.sidData?.change || 0) > 0 ? '+' : ''}${i?.sidData?.change || 0}</div><div class="label">SID Change</div></div></div>`;
 
-            // MOVED UP: Executive Summary with Key Factors (now above timeframe selector)
             if (ca?.summary) {
-                html += `
-                    <div class="executive-summary">
-                        <h3 style="color: #60a5fa; margin-bottom: 12px;">📝 Executive Summary</h3>
-                        <div style="font-size: 14px; line-height: 1.6;">${ca.summary}</div>
-                        ${renderKeyFactors(reasoning)}
-                    </div>
-                `;
+                html += `<div class="executive-summary"><h3 style="color: #60a5fa; margin-bottom: 12px;">📝 Executive Summary</h3><div style="font-size: 14px; line-height: 1.6;">${ca.summary}</div>${renderKeyFactors(reasoning)}</div>`;
             }
 
-            // Timeframe Selector
+            if (ca?.redFlags?.hasRedFlags) {
+                html += `<div class="section" style="margin-bottom: 20px;"><div class="section-title" style="color: #ef4444;">🚨 Red Flags Detected</div>${renderRedFlags(ca.redFlags)}</div>`;
+            }
+
             html += `<div class="timeframe-selector">${['1D', '1W', '1M', '1Y'].map(tf => `<button class="timeframe-btn ${currentTimeframe === tf ? 'active' : ''}" onclick="setTimeframe('${tf}', '${symbol}')">${tf}</button>`).join('')}</div>`;
-
-            // Top Brokers Split (2-column)
-            html += `
-                <div class="two-column">
-                    <div class="section"><div class="section-title">📊 TOP BUYERS (${currentTimeframe})</div>${renderBrokerTable(buyers, 'buy')}</div>
-                    <div class="section"><div class="section-title">📊 TOP SELLERS (${currentTimeframe})</div>${renderBrokerTable(sellers, 'sell')}</div>
-                </div>
-            `;
-
-            // Big Dog Split (2-column) - FIXED net value display
-            html += `
-                <div class="two-column">
-                    <div class="section"><div class="section-title">🐕 BIG DOG BUYING (${currentTimeframe})</div>${renderBigDogTable(bigDogBuyers, 'buy')}</div>
-                    <div class="section"><div class="section-title">🐕 BIG DOG SELLING (${currentTimeframe})</div>${renderBigDogTable(bigDogSellers, 'sell')}</div>
-                </div>
-            `;
-
-            // Bandarmology Setup Analysis
+            html += `<div class="two-column"><div class="section"><div class="section-title">📊 TOP BUYERS (${currentTimeframe})</div>${renderBrokerTable(buyers, 'buy')}</div><div class="section"><div class="section-title">📊 TOP SELLERS (${currentTimeframe})</div>${renderBrokerTable(sellers, 'sell')}</div></div>`;
+            html += `<div class="two-column"><div class="section"><div class="section-title">🐕 BIG DOG BUYING (${currentTimeframe})</div>${renderBigDogTable(bigDogBuyers, 'buy')}</div><div class="section"><div class="section-title">🐕 BIG DOG SELLING (${currentTimeframe})</div>${renderBigDogTable(bigDogSellers, 'sell')}</div></div>`;
             html += renderBandarmologyAnalysis(band);
 
-            // Broker Holdings Detail Section
-            html += `
-                <div class="section" style="margin-bottom: 20px;">
-                    <div class="section-title">💼 Major Broker Holdings & Duration</div>
-                    ${renderBrokerHoldingsDetail(i.brokerSummary, i.timeframes)}
-                </div>
-            `;
-
-            // Volume + Price Action (2-column)
-            html += `
-                <div class="two-column">
-                    <div class="section">
-                        <div class="section-title">📊 Volume Analysis</div>
-                        <div style="font-size: 13px; line-height: 1.8;">
-                            <div style="margin-bottom: 8px;"><strong>Today's Volume:</strong> ${((i?.volumeAnalysis?.totalVolume || 0) / 1000000).toFixed(1)}M</div>
-                            <div style="margin-bottom: 8px;"><strong>20-Day Avg:</strong> ${((i?.volumeAnalysis?.averageVolume || 0) / 1000000).toFixed(1)}M</div>
-                            <div style="margin-bottom: 8px;"><strong>vs Avg:</strong> ${(i?.volumeAnalysis?.volumeVsAvg || 0).toFixed(1)}%</div>
-                            ${i?.volumeAnalysis?.volumeSpike?.detected ? `<div style="color: #22c55e;">📈 Volume Spike: ${i.volumeAnalysis.volumeSpike.ratio}x</div>` : ''}
-                            ${i?.volumeAnalysis?.volumeDryUp?.detected ? `<div style="color: #eab308;">📉 Volume Dry-Up detected</div>` : ''}
-                        </div>
-                    </div>
-                    <div class="section">
-                        <div class="section-title">📈 Price Action Signals</div>
-                        ${renderPriceActionWithExplanations(i)}
-                    </div>
-                </div>
-            `;
-
-            // RSI Indicators Section
-            html += `
-                <div class="section" style="margin-bottom: 16px;">
-                    <div class="section-title">📊 Relative Strength Indicators (RSI)</div>
-                    ${renderRSIIndicators(stock, i)}
-                </div>
-            `;
-
-            // Quantitative Indicators
-            html += `
-                <div class="section" style="margin-bottom: 16px;">
-                    <div class="section-title">📊 Quantitative Indicators</div>
-                    ${renderQuantitative(i)}
-                </div>
-            `;
-
-            // Remaining sections in 2-column layout
             const sections = ca?.sections || [];
-            const remainingSections = sections.filter(s => 
-                !s.title.includes('FUNDAMENTAL') && 
-                !s.title.includes('BROKER CONCENTRATION') && 
-                !s.title.includes('COST BASIS') && 
-                !s.title.includes('FOREIGN FLOW') && 
-                !s.title.includes('VOLUME & MOMENTUM') && 
-                !s.title.includes('RETAIL') && 
-                !s.title.includes('BIG DOG') && 
-                !s.title.includes('KEY LEVELS')
-            );
-            
-            for (let j = 0; j < remainingSections.length; j += 2) {
-                const section1 = remainingSections[j];
-                const section2 = remainingSections[j + 1];
-                
+            for (let j = 0; j < sections.length; j += 2) {
+                const section1 = sections[j];
+                const section2 = sections[j + 1];
                 if (section2) {
-                    html += `
-                        <div class="two-column">
-                            <div class="section">
-                                <div class="section-title">${section1.title}</div>
-                                <div style="font-size: 13px; line-height: 1.8;">${section1.content.map(item => `<div style="margin-bottom: 4px;">${item}</div>`).join('')}</div>
-                            </div>
-                            <div class="section">
-                                <div class="section-title">${section2.title}</div>
-                                <div style="font-size: 13px; line-height: 1.8;">${section2.content.map(item => `<div style="margin-bottom: 4px;">${item}</div>`).join('')}</div>
-                            </div>
-                        </div>
-                    `;
+                    html += `<div class="two-column"><div class="section"><div class="section-title">${section1.title}</div><div style="font-size: 13px; line-height: 1.8;">${section1.content.map(item => `<div style="margin-bottom: 4px;">${item}</div>`).join('')}</div></div><div class="section"><div class="section-title">${section2.title}</div><div style="font-size: 13px; line-height: 1.8;">${section2.content.map(item => `<div style="margin-bottom: 4px;">${item}</div>`).join('')}</div></div></div>`;
                 } else {
-                    html += `
-                        <div class="section" style="margin-bottom: 16px;">
-                            <div class="section-title">${section1.title}</div>
-                            <div style="font-size: 13px; line-height: 1.8;">${section1.content.map(item => `<div style="margin-bottom: 4px;">${item}</div>`).join('')}</div>
-                        </div>
-                    `;
-                }
-            }
-            
-            // Standard sections
-            const stdSections = sections.filter(s => 
-                s.title.includes('FUNDAMENTAL') || 
-                s.title.includes('BROKER CONCENTRATION') || 
-                s.title.includes('COST BASIS') || 
-                s.title.includes('FOREIGN FLOW') || 
-                s.title.includes('RETAIL') || 
-                s.title.includes('BIG DOG') || 
-                s.title.includes('KEY LEVELS')
-            );
-            
-            for (let j = 0; j < stdSections.length; j += 2) {
-                const section1 = stdSections[j];
-                const section2 = stdSections[j + 1];
-                
-                if (section2) {
-                    html += `
-                        <div class="two-column">
-                            <div class="section">
-                                <div class="section-title">${section1.title}</div>
-                                <div style="font-size: 13px; line-height: 1.8;">${section1.content.map(item => `<div style="margin-bottom: 4px;">${item}</div>`).join('')}</div>
-                            </div>
-                            <div class="section">
-                                <div class="section-title">${section2.title}</div>
-                                <div style="font-size: 13px; line-height: 1.8;">${section2.content.map(item => `<div style="margin-bottom: 4px;">${item}</div>`).join('')}</div>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    html += `
-                        <div class="section" style="margin-bottom: 16px;">
-                            <div class="section-title">${section1.title}</div>
-                            <div style="font-size: 13px; line-height: 1.8;">${section1.content.map(item => `<div style="margin-bottom: 4px;">${item}</div>`).join('')}</div>
-                        </div>
-                    `;
+                    html += `<div class="section" style="margin-bottom: 16px;"><div class="section-title">${section1.title}</div><div style="font-size: 13px; line-height: 1.8;">${section1.content.map(item => `<div style="margin-bottom: 4px;">${item}</div>`).join('')}</div></div>`;
                 }
             }
 
