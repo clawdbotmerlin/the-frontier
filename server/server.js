@@ -636,6 +636,7 @@ async function generateBandarIndicators(symbol, priceData) {
       },
       foreignStreak: foreignStreak,
       brokerConcentration: brokerConcentration,
+      priceAction: generatePriceActionIndicators(symbol, priceData, volumeAnalysis, brokerSummary, txDate),
       totals: {
         buyVolume: totalBuyVolume,
         buyValue: totalBuyValue,
@@ -649,6 +650,118 @@ async function generateBandarIndicators(symbol, priceData) {
     console.error(`Error generating bandar indicators for ${symbol}:`, error);
     return generateBasicIndicators(symbol, priceData);
   }
+}
+
+// Price Action Indicators (#6-10)
+function generatePriceActionIndicators(symbol, priceData, volumeAnalysis, brokerSummary, date) {
+  const currentPrice = priceData.close || 0;
+  const openPrice = priceData.open || currentPrice;
+  const highPrice = priceData.high || currentPrice;
+  const lowPrice = priceData.low || currentPrice;
+  const priceChange = priceData.change_pct || 0;
+  const volume = priceData.volume || 0;
+  const avgVolume = volumeAnalysis.averageVolume || volume;
+  
+  // Indicator #6: Price Compression / Tight Ranging
+  const dailyRange = highPrice - lowPrice;
+  const rangePct = (dailyRange / currentPrice) * 100;
+  const priceCompression = {
+    detected: false,
+    signal: 'NORMAL',
+    rangePct: parseFloat(rangePct.toFixed(2)),
+    description: 'Normal price movement'
+  };
+  
+  if (rangePct <= 2.0 && Math.abs(priceChange) <= 1.0) {
+    priceCompression.detected = true;
+    priceCompression.signal = 'COMPRESSION';
+    priceCompression.description = `Tight range: ${rangePct.toFixed(1)}% (±1-2%) - Bandar suppressing price during accumulation`;
+  }
+  
+  // Indicator #7: Fake Breakdown / Bear Trap
+  const fakeBreakdown = {
+    detected: false,
+    signal: 'NORMAL',
+    description: 'No breakdown pattern'
+  };
+  
+  // Detect if price briefly breached support (fake below open) then recovered
+  const breachedSupport = lowPrice < (openPrice * 0.97); // 3% below open
+  const recoveredStrong = currentPrice > (lowPrice * 1.02) && priceChange > -1;
+  const volumeConfirmation = volume > (avgVolume * 1.3);
+  
+  if (breachedSupport && recoveredStrong && volumeConfirmation) {
+    fakeBreakdown.detected = true;
+    fakeBreakdown.signal = 'BEAR_TRAP';
+    fakeBreakdown.description = `Bear trap: Price broke support to ${lowPrice.toLocaleString()} then snapped back to ${currentPrice.toLocaleString()} on ${(volume/avgVolume).toFixed(1)}x volume - Weak hands shaken out`;
+  }
+  
+  // Indicator #8: Lower High Correction on Low Volume
+  const lowerHighPattern = {
+    detected: false,
+    signal: 'NORMAL',
+    description: 'No correction pattern detected'
+  };
+  
+  // Check if this looks like a pullback (lower high from previous close implied)
+  const isPullback = priceChange < 0 && priceChange > -3;
+  const lowVolume = volume < (avgVolume * 0.7);
+  
+  if (isPullback && lowVolume) {
+    lowerHighPattern.detected = true;
+    lowerHighPattern.signal = 'HEALTHY_PULLBACK';
+    lowerHighPattern.description = `Healthy pullback: -${Math.abs(priceChange).toFixed(1)}% on ${(volume/avgVolume).toFixed(1)}x volume (below avg) - Bandar not selling, just lack of buying`;
+  }
+  
+  // Indicator #9: Price Floor Defense
+  const floorDefense = {
+    detected: false,
+    signal: 'NORMAL',
+    defenseLevel: 0,
+    description: 'No floor defense detected'
+  };
+  
+  // Check if price bounced strongly from day's low
+  const bounceFromLow = ((currentPrice - lowPrice) / lowPrice) * 100;
+  const heldLevel = bounceFromLow > 1.5 && lowPrice > (openPrice * 0.98);
+  
+  if (heldLevel && volumeConfirmation) {
+    floorDefense.detected = true;
+    floorDefense.signal = 'FLOOR_DEFENSE';
+    floorDefense.defenseLevel = lowPrice;
+    floorDefense.description = `Floor defended at Rp ${lowPrice.toLocaleString()}: Absorbed selling and bounced ${bounceFromLow.toFixed(1)}% on volume`;
+  }
+  
+  // Indicator #10: Gap Up on Volume After Accumulation
+  const gapUpBreakout = {
+    detected: false,
+    signal: 'NORMAL',
+    gapPct: 0,
+    description: 'No gap up detected'
+  };
+  
+  // Detect gap up (open > previous close by >1%)
+  const gapPct = ((openPrice - (currentPrice / (1 + priceChange/100))) / (currentPrice / (1 + priceChange/100))) * 100;
+  const strongGap = gapPct > 1.0;
+  const sustained = currentPrice > openPrice && priceChange > 2;
+  
+  if (strongGap && sustained && volumeConfirmation) {
+    gapUpBreakout.detected = true;
+    gapUpBreakout.signal = 'GAP_UP_BREAKOUT';
+    gapUpBreakout.gapPct = parseFloat(gapPct.toFixed(2));
+    gapUpBreakout.description = `Gap up breakout: +${gapPct.toFixed(1)}% open gap sustained with ${(volume/avgVolume).toFixed(1)}x volume - Accumulation phase complete`;
+  }
+  
+  return {
+    priceChange,
+    dailyRange,
+    rangePct,
+    priceCompression,
+    fakeBreakdown,
+    lowerHighPattern,
+    floorDefense,
+    gapUpBreakout
+  };
 }
 
 // Fallback basic indicators if database fails
@@ -695,6 +808,7 @@ function generateBasicIndicators(symbol, priceData) {
       volumeVsAvg: 0,
       volumeSpike: { detected: false, ratio: 1.0, severity: 'NONE', signal: 'NORMAL' }
     },
+    priceAction: generatePriceActionIndicators(symbol, priceData, { averageVolume: volume }, [], new Date().toISOString().split('T')[0]),
     totals: {
       buyVolume: 0,
       buyValue: 0,

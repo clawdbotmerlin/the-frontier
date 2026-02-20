@@ -187,6 +187,40 @@ export function calculateBandarScore(stockData, indicators) {
     }
   }
   
+  // Price Action Indicators (#6-10) (NEW)
+  const pa = indicators.priceAction;
+  if (pa) {
+    // #6: Price Compression
+    if (pa.priceCompression?.detected) {
+      score += 5;
+      factors.push(`Price compression: ${pa.priceCompression.rangePct}% range - accumulation zone`);
+    }
+    
+    // #7: Fake Breakdown / Bear Trap
+    if (pa.fakeBreakdown?.detected && pa.fakeBreakdown.signal === 'BEAR_TRAP') {
+      score += 12;
+      factors.push(`Bear trap: False breakdown recovered with volume - shakeout complete`);
+    }
+    
+    // #8: Lower High on Low Volume (Healthy pullback)
+    if (pa.lowerHighPattern?.detected && pa.lowerHighPattern.signal === 'HEALTHY_PULLBACK') {
+      score += 8;
+      factors.push(`Healthy pullback on low volume - bandar holding positions`);
+    }
+    
+    // #9: Floor Defense
+    if (pa.floorDefense?.detected) {
+      score += 10;
+      factors.push(`Floor defense at Rp ${pa.floorDefense.defenseLevel?.toLocaleString()} - support established`);
+    }
+    
+    // #10: Gap Up Breakout
+    if (pa.gapUpBreakout?.detected) {
+      score += 15;
+      factors.push(`Gap up breakout: ${pa.gapUpBreakout.gapPct}% gap with volume - accumulation complete!`);
+    }
+  }
+  
   score = Math.max(20, Math.min(80, score));
   
   let signal;

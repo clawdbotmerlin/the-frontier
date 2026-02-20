@@ -408,6 +408,41 @@
                     ` : '<div class="section"><div class="section-title">🎯 BROKER CONCENTRATION</div><p style="color: #64748b;">No significant broker concentration</p></div>'}
                 </div>
 
+                <!-- Price Action Indicators -->
+                <div class="section">
+                    <div class="section-title">📈 PRICE ACTION PATTERNS</div>
+                    <div style="font-size: 13px; line-height: 1.8;">
+                        ${i.priceAction?.priceCompression?.detected ? `
+                            <div style="margin-bottom: 8px; padding: 8px; background: rgba(234, 179, 8, 0.1); border-radius: 4px;">
+                                <strong style="color: #eab308;">COMPRESSION:</strong> ${i.priceAction.priceCompression.description}
+                            </div>
+                        ` : ''}
+                        ${i.priceAction?.fakeBreakdown?.detected ? `
+                            <div style="margin-bottom: 8px; padding: 8px; background: rgba(34, 197, 94, 0.1); border-radius: 4px;">
+                                <strong style="color: #22c55e;">BEAR TRAP:</strong> ${i.priceAction.fakeBreakdown.description}
+                            </div>
+                        ` : ''}
+                        ${i.priceAction?.lowerHighPattern?.detected ? `
+                            <div style="margin-bottom: 8px; padding: 8px; background: rgba(59, 130, 246, 0.1); border-radius: 4px;">
+                                <strong style="color: #60a5fa;">HEALTHY PULLBACK:</strong> ${i.priceAction.lowerHighPattern.description}
+                            </div>
+                        ` : ''}
+                        ${i.priceAction?.floorDefense?.detected ? `
+                            <div style="margin-bottom: 8px; padding: 8px; background: rgba(34, 197, 94, 0.1); border-radius: 4px;">
+                                <strong style="color: #22c55e;">FLOOR DEFENSE:</strong> ${i.priceAction.floorDefense.description}
+                            </div>
+                        ` : ''}
+                        ${i.priceAction?.gapUpBreakout?.detected ? `
+                            <div style="margin-bottom: 8px; padding: 8px; background: rgba(34, 197, 94, 0.1); border-radius: 4px;">
+                                <strong style="color: #22c55e;">GAP UP BREAKOUT:</strong> ${i.priceAction.gapUpBreakout.description}
+                            </div>
+                        ` : ''}
+                        ${!i.priceAction?.priceCompression?.detected && !i.priceAction?.fakeBreakdown?.detected && !i.priceAction?.lowerHighPattern?.detected && !i.priceAction?.floorDefense?.detected && !i.priceAction?.gapUpBreakout?.detected ? `
+                            <p style="color: #64748b;">No significant price action patterns detected</p>
+                        ` : ''}
+                    </div>
+                </div>
+
                 <!-- Executive Summary (BELOW) -->
                 <div class="executive-summary">
                     <h3 style="color: #60a5fa; margin-bottom: 12px;">📝 Executive Summary</h3>
@@ -546,6 +581,23 @@
                     signals.push(`🎪 <strong>BANDAR DOMINANCE:</strong> ${bc.dominantBrokers[0]?.code} controlling for ${bc.concentrationDays}+ days`);
                 } else if (bc.signal === 'COORDINATED_BUYING') {
                     signals.push(`🤝 <strong>COORDINATED ACCUMULATION:</strong> ${bc.dominantBrokers.map(b => b.code).join('+')} acting together`);
+                }
+            }
+            
+            // Price Action Indicators
+            const pa = i.priceAction;
+            if (pa) {
+                if (pa.priceCompression?.detected) {
+                    signals.push(`🤐 <strong>PRICE COMPRESSION:</strong> ${pa.priceCompression.rangePct}% range - Accumulation zone`);
+                }
+                if (pa.fakeBreakdown?.detected) {
+                    signals.push(`🪤 <strong>BEAR TRAP:</strong> False breakdown recovered - Weak hands shaken out!`);
+                }
+                if (pa.floorDefense?.detected) {
+                    signals.push(`🛡️ <strong>FLOOR DEFENDED:</strong> Support at Rp ${pa.floorDefense.defenseLevel?.toLocaleString()} held`);
+                }
+                if (pa.gapUpBreakout?.detected) {
+                    signals.push(`🚀 <strong>GAP UP BREAKOUT:</strong> ${pa.gapUpBreakout.gapPct}% gap with volume - Rally starting!`);
                 }
             }
             
