@@ -250,6 +250,12 @@
             html += `<div class="timeframe-selector">${['1D', '1W', '1M', '1Y'].map(tf => `<button class="timeframe-btn ${currentTimeframe === tf ? 'active' : ''}" onclick="setTimeframe('${tf}', '${symbol}')">${tf}</button>`).join('')}</div>`;
             html += `<div class="two-column"><div class="section"><div class="section-title">📊 TOP BUYERS (${currentTimeframe})</div>${renderBrokerTable(buyers, 'buy')}</div><div class="section"><div class="section-title">📊 TOP SELLERS (${currentTimeframe})</div>${renderBrokerTable(sellers, 'sell')}</div></div>`;
             html += `<div class="two-column"><div class="section"><div class="section-title">🐕 BIG DOG BUYING (${currentTimeframe})</div>${renderBigDogTable(bigDogBuyers, 'buy')}</div><div class="section"><div class="section-title">🐕 BIG DOG SELLING (${currentTimeframe})</div>${renderBigDogTable(bigDogSellers, 'sell')}</div></div>`;
+
+            // Broker Holdings Detail Section
+            html += `<div class="section" style="margin-bottom: 20px;">
+                <div class="section-title">💼 Major Broker Holdings & Duration</div>
+                ${renderBrokerHoldingsDetail(i.brokerSummary, i.timeframes)}
+            </div>`;
             html += renderBandarmologyAnalysis(band);
 
             const sections = ca?.sections || [];
@@ -273,6 +279,41 @@
             document.getElementById('overlay').classList.remove('active');
         }
 
+
+        // Broker Holdings Detail - shows which brokers hold majority and for how long
+        function renderBrokerHoldingsDetail(brokerSummary, timeframes) {
+            if (!brokerSummary?.length) return '';
+            
+            const topHolders = brokerSummary.filter(b => (b.netValue || 0) > 0).sort((a, b) => b.netValue - a.netValue).slice(0, 5);
+            
+            if (!topHolders.length) return '<p style="color: #64748b;">No major broker holdings detected</p>';
+            
+            let html = '<div style="font-size: 13px; line-height: 1.8;">';
+            
+            for (const b of topHolders) {
+                const brokerName = brokerNameMap[b.code] || b.name || b.code;
+                const holdingValue = (b.netValue / 1000000000).toFixed(1);
+                const lots = (b.buyVolume / 1000).toFixed(1);
+                const avgPrice = b.avgBuyPrice?.toLocaleString() || 'N/A';
+                
+                let durationText = 'Recent position';
+                if (timeframes) {
+                    const weekBroker = timeframes['1W']?.brokers?.find(bb => bb.code === b.code);
+                    const monthBroker = timeframes['1M']?.brokers?.find(bb => bb.code === b.code);
+                    
+                    if (monthBroker && monthBroker.netValue > 0) {
+                        durationText = 'Holding for 1+ month - HIGH CONVICTION';
+                    } else if (weekBroker && weekBroker.netValue > 0) {
+                        durationText = 'Holding for 1+ week - Building position';
+                    }
+                }
+                
+                html += '<div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; margin-bottom: 8px; border-left: 3px solid #22c55e;"><div style="font-weight: 600; color: #22c55e; margin-bottom: 4px;"><span class="tooltip" data-tooltip="' + brokerName + '">' + b.code + '</span> - +' + holdingValue + 'B Net</div><div style="color: #cbd5e1; font-size: 12px;">📦 ' + lots + 'K lots @ Rp ' + avgPrice + '<br>⏱️ ' + durationText + '</div></div>';
+            }
+            
+            html += '</div>';
+            return html;
+        }
         loadData();
     </script>
 </body>
