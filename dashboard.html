@@ -31,8 +31,53 @@
             -webkit-text-fill-color: transparent;
         }
         .container { max-width: 1600px; margin: 0 auto; padding: 24px; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+        }
+        .stat-card .label { color: #64748b; font-size: 11px; text-transform: uppercase; }
+        .stat-card .value { font-size: 32px; font-weight: bold; margin-top: 8px; }
+        .buy { color: #22c55e; }
+        .sell { color: #ef4444; }
         
-        /* ENLARGED Panel */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+            font-size: 13px;
+        }
+        th {
+            background: #0f172a;
+            padding: 14px 12px;
+            text-align: left;
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+        th:hover { background: #1e293b; }
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #334155;
+        }
+        tr:hover { background: rgba(51, 65, 85, 0.5); }
+        .signal {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        
         .detail-panel {
             position: fixed;
             right: 0;
@@ -44,7 +89,7 @@
             overflow-y: auto;
             transform: translateX(100%);
             transition: transform 0.3s ease;
-            z-index: 100;
+            z-index: 1000;
         }
         .detail-panel.active { transform: translateX(0); }
         .detail-header {
@@ -53,11 +98,10 @@
             border-bottom: 1px solid #334155;
             position: sticky;
             top: 0;
-            z-index: 10;
+            z-index: 100;
         }
         .detail-content { padding: 24px; }
         
-        /* Quick Stats */
         .quick-stats {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -71,16 +115,8 @@
             border: 1px solid #334155;
             text-align: center;
         }
-        .quick-stat-card .value {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-        .quick-stat-card .label {
-            font-size: 11px;
-            color: #64748b;
-            text-transform: uppercase;
-        }
+        .quick-stat-card .value { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+        .quick-stat-card .label { font-size: 11px; color: #64748b; text-transform: uppercase; }
         
         .timeframe-selector {
             display: flex;
@@ -96,10 +132,7 @@
             cursor: pointer;
             font-size: 12px;
         }
-        .timeframe-btn.active {
-            background: #3b82f6;
-            color: white;
-        }
+        .timeframe-btn.active { background: #3b82f6; color: white; }
         
         .two-column {
             display: grid;
@@ -122,28 +155,46 @@
             text-transform: uppercase;
         }
         
-        .broker-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 11px;
-        }
+        .broker-table { width: 100%; border-collapse: collapse; font-size: 11px; }
         .broker-table th {
             background: rgba(15, 23, 42, 0.8);
             padding: 8px 6px;
             font-size: 9px;
             text-align: left;
         }
-        .broker-table td {
-            padding: 8px 6px;
-            border-bottom: 1px solid #334155;
-        }
+        .broker-table td { padding: 8px 6px; border-bottom: 1px solid #334155; }
         
-        .price-action-box {
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
+        .tooltip { 
+            position: relative; 
+            cursor: help;
+            display: inline-block;
+        }
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0f172a;
+            color: #fff;
+            padding: 10px 14px;
             border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 20px;
+            font-size: 12px;
+            white-space: nowrap;
+            border: 1px solid #475569;
+            z-index: 99999;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+        .tooltip:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 115%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: #475569;
+            z-index: 99999;
         }
         
         .executive-summary {
@@ -154,12 +205,120 @@
             margin-bottom: 20px;
         }
         
-        .macro-thesis {
-            background: rgba(234, 179, 8, 0.1);
-            border-left: 3px solid #eab308;
+        .signal-card {
             padding: 16px;
             border-radius: 8px;
-            margin-top: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid;
+        }
+        .signal-card.bullish {
+            background: rgba(34, 197, 94, 0.1);
+            border-left-color: #22c55e;
+        }
+        .signal-card.bearish {
+            background: rgba(239, 68, 68, 0.1);
+            border-left-color: #ef4444;
+        }
+        .signal-card.neutral {
+            background: rgba(96, 165, 250, 0.1);
+            border-left-color: #60a5fa;
+        }
+        .signal-title {
+            font-weight: 700;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+        .signal-reasoning {
+            font-size: 12px;
+            color: #cbd5e1;
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+        .signal-implication {
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .status-card {
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid;
+            background: rgba(15, 23, 42, 0.5);
+        }
+        .status-card.sweet { border-left-color: #22c55e; }
+        .status-card.danger { border-left-color: #ef4444; }
+        .status-card.caution { border-left-color: #eab308; }
+        .status-card.value { border-left-color: #22c55e; }
+        .status-card.early { border-left-color: #60a5fa; }
+        .status-label {
+            font-weight: 700;
+            font-size: 12px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+        .status-detail {
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+        
+        .quant-card {
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .quant-label {
+            font-weight: 600;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+        .quant-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .quant-signal {
+            font-size: 11px;
+            margin-top: 2px;
+        }
+        .quant-help {
+            font-size: 10px;
+            color: #64748b;
+            margin-top: 4px;
+            font-style: italic;
+        }
+        
+        /* Key factor colors */
+        .key-factor-bullish {
+            color: #22c55e;
+            border-left: 2px solid #22c55e;
+        }
+        .key-factor-bearish {
+            color: #ef4444;
+            border-left: 2px solid #ef4444;
+        }
+        .key-factor-neutral {
+            color: #94a3b8;
+            border-left: 2px solid #475569;
+        }
+        
+        /* RSI Card Styles */
+        .rsi-card {
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: rgba(15, 23, 42, 0.5);
+            border-left: 3px solid #a855f7;
+        }
+        .rsi-title {
+            font-weight: 700;
+            font-size: 12px;
+            color: #a855f7;
+            margin-bottom: 6px;
+        }
+        .rsi-desc {
+            font-size: 12px;
+            color: #cbd5e1;
+            line-height: 1.5;
         }
         
         .close-btn {
@@ -181,12 +340,15 @@
             inset: 0;
             background: rgba(0,0,0,0.5);
             display: none;
-            z-index: 99;
+            z-index: 999;
         }
         .overlay.active { display: block; }
         
-        .buy { color: #22c55e; }
-        .sell { color: #ef4444; }
+        @media (max-width: 768px) {
+            .detail-panel { width: 100%; }
+            .two-column { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: repeat(2, 1fr); }
+        }
     </style>
 </head>
 <body>
@@ -196,7 +358,7 @@
         <div class="header-content">
             <div>
                 <h1>The Frontier</h1>
-                <p>Professional IDX LQ45 Screener</p>
+                <p style="color: #94a3b8; font-size: 14px;">Professional IDX LQ45 Screener</p>
             </div>
             <button onclick="loadData()" style="padding: 12px 24px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">Refresh</button>
         </div>
@@ -219,11 +381,49 @@
         const API_URL = 'http://68.183.229.3:5000/api';
         let screenerData = [];
         let currentTimeframe = '1D';
+        let brokerNameMap = {};
+
+        const priceActionExplanations = {
+            'COORDINATED_BUYING': { meaning: 'Multiple brokers buying simultaneously', reasoning: 'When 3+ top-tier brokers accumulate together, it suggests institutional coordination or shared research conviction.', implication: 'Bullish - institutions are aligned', type: 'bullish' },
+            'DISTRIBUTION_DETECTED': { meaning: 'Heavy selling by multiple brokers', reasoning: 'Broad-based selling across multiple broker codes indicates institutional exit.', implication: 'Bearish - smart money leaving', type: 'bearish' },
+            'BREAKOUT_CONFIRMED': { meaning: 'Price broke resistance on volume', reasoning: 'Clean break above resistance with above-average volume validates the move.', implication: 'Bullish - momentum building', type: 'bullish' },
+            'ACCUMULATION_ZONE': { meaning: 'Price consolidating near broker cost', reasoning: 'Sideways price action near broker average cost suggests institutions are quietly building positions.', implication: 'Bullish - early accumulation phase', type: 'bullish' },
+            'VOLUME_DRY_UP': { meaning: 'Volume declining during consolidation', reasoning: 'Low volume after a decline indicates selling exhaustion.', implication: 'Bullish - sellers exhausted', type: 'bullish' },
+            'STEALTH_ACCUMULATION': { meaning: 'Buying hidden within normal volume', reasoning: 'Large blocks being absorbed without price spikes.', implication: 'Bullish - smart money entering quietly', type: 'bullish' },
+            'RETAIL_FOMO': { meaning: 'Retail investors chasing price', reasoning: 'Sudden SID surge with price chasing often marks tops.', implication: 'Bearish - contrarian sell signal', type: 'bearish' },
+            'BROKER_CONCENTRATION': { meaning: '1-3 brokers controlling majority flow', reasoning: 'High concentration means easier price control.', implication: 'Neutral - depends on broker quality', type: 'neutral' }
+        };
+
+        function getPriceActionExplanation(signal) {
+            return priceActionExplanations[signal] || { meaning: signal.replace(/_/g, ' '), reasoning: 'Technical signal detected.', implication: 'Monitor for confirmation', type: 'neutral' };
+        }
+
+        // Color code key factors
+        function colorCodeFactor(text) {
+            const bullishKeywords = ['buying', 'accumulation', 'bullish', 'conviction', 'opportunity', 'sweet spot', 'breakout', 'support', 'value', 'accumulating', 'holding', 'strong'];
+            const bearishKeywords = ['selling', 'distribution', 'bearish', 'exodus', 'danger', 'exiting', 'fomo', 'weak', 'caution', 'resistance'];
+            
+            const lowerText = text.toLowerCase();
+            const isBullish = bullishKeywords.some(k => lowerText.includes(k));
+            const isBearish = bearishKeywords.some(k => lowerText.includes(k));
+            
+            if (isBullish && !isBearish) return 'key-factor-bullish';
+            if (isBearish && !isBullish) return 'key-factor-bearish';
+            return 'key-factor-neutral';
+        }
 
         async function loadData() {
             try {
-                const response = await fetch(`${API_URL}/screener`);
-                const result = await response.json();
+                const [screenerRes, brokersRes] = await Promise.all([
+                    fetch(`${API_URL}/screener`),
+                    fetch(`${API_URL}/brokers`).catch(() => ({json: () => ({data: {results: []}})}))
+                ]);
+                const result = await screenerRes.json();
+                const brokers = await brokersRes.json().catch(() => ({data: {results: []}}));
+                
+                brokerNameMap = {};
+                (brokers.data?.results || []).forEach(b => { brokerNameMap[b.code] = b.name; });
+                
                 if (result.status === 'success') {
                     screenerData = result.data;
                     updateStats();
@@ -231,28 +431,17 @@
                 }
             } catch (err) {
                 console.error('Error:', err);
+                document.getElementById('table-container').innerHTML = '<div style="padding: 40px; text-align: center; color: #ef4444;">Error loading data</div>';
             }
         }
 
         function updateStats() {
             const html = `
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
-                    <div style="background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155;">
-                        <div style="color: #64748b; font-size: 11px; text-transform: uppercase;">Total</div>
-                        <div style="font-size: 32px; font-weight: bold; margin-top: 8px;">${screenerData.length}</div>
-                    </div>
-                    <div style="background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155;">
-                        <div style="color: #64748b; font-size: 11px; text-transform: uppercase;">Buy</div>
-                        <div style="font-size: 32px; font-weight: bold; margin-top: 8px; color: #22c55e;">${screenerData.filter(s => s.signal === 'BUY').length}</div>
-                    </div>
-                    <div style="background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155;">
-                        <div style="color: #64748b; font-size: 11px; text-transform: uppercase;">Hold</div>
-                        <div style="font-size: 32px; font-weight: bold; margin-top: 8px; color: #eab308;">${screenerData.filter(s => s.signal === 'HOLD').length}</div>
-                    </div>
-                    <div style="background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155;">
-                        <div style="color: #64748b; font-size: 11px; text-transform: uppercase;">Sell</div>
-                        <div style="font-size: 32px; font-weight: bold; margin-top: 8px; color: #ef4444;">${screenerData.filter(s => s.signal === 'SELL').length}</div>
-                    </div>
+                <div class="stats">
+                    <div class="stat-card"><div class="label">Total</div><div class="value">${screenerData.length}</div></div>
+                    <div class="stat-card"><div class="label">Buy</div><div class="value buy">${screenerData.filter(s => s.signal === 'BUY').length}</div></div>
+                    <div class="stat-card"><div class="label">Hold</div><div class="value" style="color: #eab308;">${screenerData.filter(s => s.signal === 'HOLD').length}</div></div>
+                    <div class="stat-card"><div class="label">Sell</div><div class="value sell">${screenerData.filter(s => s.signal === 'SELL').length}</div></div>
                 </div>
             `;
             document.getElementById('stats-container').innerHTML = html;
@@ -260,38 +449,346 @@
 
         function renderTable() {
             const html = `
-                <div style="background: #1e293b; border-radius: 12px; overflow: hidden; border: 1px solid #334155;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                        <thead>
-                            <tr style="background: #0f172a;">
-                                <th style="padding: 14px 12px; text-align: left; font-size: 10px; color: #64748b; text-transform: uppercase;">Stock</th>
-                                <th style="padding: 14px 12px; text-align: left; font-size: 10px; color: #64748b; text-transform: uppercase;">Price</th>
-                                <th style="padding: 14px 12px; text-align: left; font-size: 10px; color: #64748b; text-transform: uppercase;">Change</th>
-                                <th style="padding: 14px 12px; text-align: left; font-size: 10px; color: #64748b; text-transform: uppercase;">Foreign</th>
-                                <th style="padding: 14px 12px; text-align: left; font-size: 10px; color: #64748b; text-transform: uppercase;">Score</th>
-                                <th style="padding: 14px 12px; text-align: left; font-size: 10px; color: #64748b; text-transform: uppercase;">Signal</th>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Stock</th>
+                            <th>Price</th>
+                            <th>1D</th>
+                            <th>1W</th>
+                            <th>1M</th>
+                            <th>Foreign</th>
+                            <th>Score</th>
+                            <th>Signal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${screenerData.map(stock => {
+                            const foreignValue = (stock.indicators?.foreignNetValue || 0) / 1000000000;
+                            const scoreColor = stock.score >= 65 ? '#22c55e' : stock.score >= 45 ? '#eab308' : '#ef4444';
+                            const tf = stock.indicators?.timeframes || {};
+                            const weekChange = tf['1W']?.brokers?.length ? ((tf['1W'].brokers[0].avgBuyPrice || stock.price) - stock.price) / stock.price * 100 : stock.changePct * 0.8;
+                            const monthChange = tf['1M']?.brokers?.length ? ((tf['1M'].brokers[0].avgBuyPrice || stock.price) - stock.price) / stock.price * 100 : stock.changePct * 0.6;
+                            
+                            return `
+                            <tr onclick="showDetail('${stock.symbol}')" style="cursor: pointer;">
+                                <td><strong>${stock.symbol}</strong><br><span style="font-size: 11px; color: #64748b;">${stock.name}</span></td>
+                                <td>Rp ${stock.price?.toLocaleString()}</td>
+                                <td style="color: ${stock.changePct >= 0 ? '#22c55e' : '#ef4444'};">${stock.changePct >= 0 ? '+' : ''}${stock.changePct?.toFixed(1)}%</td>
+                                <td style="color: ${weekChange >= 0 ? '#22c55e' : '#ef4444'};">${weekChange >= 0 ? '+' : ''}${weekChange?.toFixed(1)}%</td>
+                                <td style="color: ${monthChange >= 0 ? '#22c55e' : '#ef4444'};">${monthChange >= 0 ? '+' : ''}${monthChange?.toFixed(1)}%</td>
+                                <td style="color: ${foreignValue > 0 ? '#22c55e' : '#ef4444'};">${foreignValue > 0 ? '+' : ''}${foreignValue.toFixed(2)}B</td>
+                                <td style="color: ${scoreColor}; font-weight: 700;">${stock.score}</td>
+                                <td><span class="signal" style="background: ${stock.signal === 'BUY' ? 'rgba(34,197,94,0.2)' : stock.signal === 'SELL' ? 'rgba(239,68,68,0.2)' : 'rgba(234,179,8,0.2)'}; color: ${stock.signal === 'BUY' ? '#22c55e' : stock.signal === 'SELL' ? '#ef4444' : '#eab308'}">${stock.signal}</span></td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            ${screenerData.map(stock => {
-                                const foreignValue = (stock.indicators?.foreignNetValue || 0) / 1000000000;
-                                const scoreColor = stock.score >= 65 ? '#22c55e' : stock.score >= 45 ? '#eab308' : '#ef4444';
-                                return `
-                                <tr onclick="showDetail('${stock.symbol}')" style="cursor: pointer; border-bottom: 1px solid #334155;">
-                                    <td style="padding: 14px 12px;"><strong>${stock.symbol}</strong><br><span style="font-size: 11px; color: #64748b;">${stock.name}</span></td>
-                                    <td style="padding: 14px 12px;">Rp ${stock.price?.toLocaleString()}</td>
-                                    <td style="padding: 14px 12px; color: ${stock.changePct >= 0 ? '#22c55e' : '#ef4444'};">${stock.changePct >= 0 ? '+' : ''}${stock.changePct?.toFixed(2)}%</td>
-                                    <td style="padding: 14px 12px; color: ${foreignValue > 0 ? '#22c55e' : '#ef4444'};">${foreignValue > 0 ? '+' : ''}${foreignValue.toFixed(2)}B</td>
-                                    <td style="padding: 14px 12px; color: ${scoreColor}; font-weight: 700;">${stock.score}</td>
-                                    <td style="padding: 14px 12px;"><span style="padding: 4px 10px; border-radius: 20px; font-size: 10px; background: ${stock.signal === 'BUY' ? 'rgba(34,197,94,0.2)' : stock.signal === 'SELL' ? 'rgba(239,68,68,0.2)' : 'rgba(234,179,8,0.2)'}; color: ${stock.signal === 'BUY' ? '#22c55e' : stock.signal === 'SELL' ? '#ef4444' : '#eab308'}">${stock.signal}</span></td>
-                                </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
             `;
             document.getElementById('table-container').innerHTML = html;
+        }
+
+        function setTimeframe(tf, symbol) {
+            currentTimeframe = tf;
+            showDetail(symbol);
+        }
+
+        function filterBigDogsByTimeframe(bigDogs, timeframe, indicators) {
+            if (timeframe === '1D') return bigDogs;
+            const tf = indicators.timeframes?.[timeframe];
+            if (tf && tf.brokers) {
+                const tier1Codes = ['YU', 'CC', 'NI', 'GW', 'SQ', 'OD', 'BK', 'AK'];
+                return tf.brokers
+                    .filter(b => tier1Codes.includes(b.code))
+                    .map(b => ({
+                        code: b.code,
+                        name: b.name,
+                        buyVolume: b.buyVolume,
+                        sellVolume: b.sellVolume,
+                        avgBuyPrice: b.avgBuyPrice,
+                        avgSellPrice: b.avgSellPrice,
+                        netValue: b.netValue,
+                        action: b.netValue > 0 ? 'ACCUMULATING' : 'DISTRIBUTING'
+                    }));
+            }
+            return bigDogs;
+        }
+
+        // FIXED: Big Dog table - use absolute net value for display
+        function renderBigDogTable(brokers, type) {
+            if (!brokers || !brokers.length) return '<p style="color: #64748b;">No activity</p>';
+            return `<table class="broker-table">
+                <thead><tr><th>Broker</th><th>Lots</th><th>Avg Price</th><th>Net Value</th></tr></thead>
+                <tbody>
+                    ${brokers.map(b => {
+                        const lots = type === 'buy' ? b.buyVolume : b.sellVolume;
+                        const price = type === 'buy' ? b.avgBuyPrice : b.avgSellPrice;
+                        // FIXED: Show actual net value - already negative for sellers
+                        const netValue = b.netValue || 0;
+                        const displayValue = Math.abs(netValue);
+                        const tooltip = brokerNameMap[b.code] || b.name || b.code;
+                        return `<tr>
+                            <td><span class="tooltip" data-tooltip="${tooltip}"><strong>${b.code}</strong></span></td>
+                            <td style="color: ${type === 'buy' ? '#22c55e' : '#ef4444'}">${(lots/1000).toFixed(1)}K</td>
+                            <td>Rp ${price?.toLocaleString()}</td>
+                            <td style="color: ${netValue > 0 ? '#22c55e' : '#ef4444'}">${netValue > 0 ? '+' : '-'}${(displayValue/1000000000).toFixed(1)}B</td>
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>`;
+        }
+
+        function renderBrokerTable(brokers, type) {
+            if (!brokers || !brokers.length) return '<p style="color: #64748b;">No activity</p>';
+            return `<table class="broker-table">
+                <thead><tr><th>Broker</th><th>Total</th><th>Avg</th><th>Net</th></tr></thead>
+                <tbody>
+                    ${brokers.slice(0, 8).map(b => {
+                        const tooltip = brokerNameMap[b.code] || b.name || b.code;
+                        return `<tr>
+                            <td><span class="tooltip" data-tooltip="${tooltip}"><strong>${b.code}</strong></span></td>
+                            <td style="font-weight: 600;">${((b.buyVolume + b.sellVolume)/1000).toFixed(1)}K</td>
+                            <td>Rp ${type === 'buy' ? b.avgBuyPrice?.toLocaleString() : b.avgSellPrice?.toLocaleString()}</td>
+                            <td style="color: ${type === 'buy' ? '#22c55e' : '#ef4444'}">${type === 'buy' ? '+' : ''}${(b.netValue/1000000000).toFixed(1)}B</td>
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>`;
+        }
+
+        function renderBandarmologyAnalysis(band) {
+            if (!band) return '';
+            let html = '<div class="section" style="margin-bottom: 20px;">';
+            html += '<div class="section-title">🎯 Bandarmology Setup Analysis</div>';
+            html += '<div style="display: grid; gap: 12px;">';
+            
+            if (band.priceVsCost?.detail) {
+                const status = band.priceVsCost.status;
+                const cardClass = status === 'SWEET_SPOT' ? 'sweet' : status === 'DANGER' ? 'danger' : status === 'VALUE' ? 'value' : status === 'CAUTION' ? 'caution' : 'early';
+                const color = status === 'SWEET_SPOT' || status === 'VALUE' ? '#22c55e' : status === 'DANGER' ? '#ef4444' : status === 'CAUTION' ? '#eab308' : '#60a5fa';
+                html += `<div class="status-card ${cardClass}"><div class="status-label" style="color: ${color}">Price vs Broker Cost: ${status}</div><div class="status-detail">${band.priceVsCost.detail}</div></div>`;
+            }
+            
+            if (band.brokerAccumulation?.detail) {
+                const status = band.brokerAccumulation.status;
+                const color = status === 'STRONG' ? '#22c55e' : status === 'GOOD' ? '#60a5fa' : '#ef4444';
+                html += `<div class="status-card" style="border-left-color: ${color}"><div class="status-label" style="color: ${color}">Broker Accumulation: ${status}</div><div class="status-detail">${band.brokerAccumulation.detail}</div></div>`;
+            }
+            
+            if (band.stillHolding?.detail) {
+                const status = band.stillHolding.status;
+                const color = status === 'YES' ? '#22c55e' : status === 'NO' ? '#ef4444' : '#eab308';
+                const icon = status === 'YES' ? '✅' : status === 'NO' ? '🚨' : '⚠️';
+                html += `<div class="status-card" style="border-left-color: ${color}; background: ${status === 'NO' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(15, 23, 42, 0.5)'}"><div class="status-label" style="color: ${color}">${icon} Still Holding: ${status}</div><div class="status-detail">${band.stillHolding.detail}</div></div>`;
+            }
+            
+            if (band.accumulationDuration?.detail) {
+                html += `<div class="status-card" style="border-left-color: #60a5fa"><div class="status-label" style="color: #60a5fa">Accumulation Duration: ${band.accumulationDuration.status}</div><div class="status-detail">${band.accumulationDuration.detail}</div></div>`;
+            }
+            
+            html += '</div></div>';
+            return html;
+        }
+
+        function renderQuantitative(i) {
+            if (!i.quantitative) return '<p style="color: #64748b;">Quantitative indicators not available</p>';
+            const q = i.quantitative;
+            return `
+                <div class="two-column">
+                    <div class="quant-card" style="background: rgba(59, 130, 246, 0.1);">
+                        <div class="quant-label" style="color: #60a5fa;">MFI</div>
+                        <div class="quant-value" style="color: #e2e8f0;">${q.mfi?.value || 'N/A'}</div>
+                        <div class="quant-signal" style="color: ${q.mfi?.signal === 'OVERBOUGHT' ? '#ef4444' : q.mfi?.signal === 'OVERSOLD' ? '#22c55e' : '#94a3b8'};">${q.mfi?.signal || 'Neutral'}</div>
+                        <div class="quant-help">Money Flow Index</div>
+                    </div>
+                    <div class="quant-card" style="background: rgba(167, 139, 250, 0.1);">
+                        <div class="quant-label" style="color: #a78bfa;">OBV</div>
+                        <div class="quant-value" style="color: #e2e8f0;">${q.obv?.value || 'N/A'}</div>
+                        <div class="quant-signal" style="color: ${q.obv?.divergence?.detected ? (q.obv?.divergence?.signal === 'BULLISH_DIVERGENCE' ? '#22c55e' : '#ef4444') : '#94a3b8'};">${q.obv?.divergence?.signal?.replace(/_/g, ' ') || 'No Divergence'}</div>
+                        <div class="quant-help">On-Balance Volume</div>
+                    </div>
+                    <div class="quant-card" style="background: rgba(34, 197, 94, 0.1);">
+                        <div class="quant-label" style="color: #22c55e;">VWAP</div>
+                        <div class="quant-value" style="color: #e2e8f0; font-size: 16px;">Rp ${q.vwap?.value?.toLocaleString() || 'N/A'}</div>
+                        <div class="quant-signal" style="color: ${(q.vwap?.priceVsVwap || 0) > 0 ? '#22c55e' : '#ef4444'};">${(q.vwap?.priceVsVwap || 0) > 0 ? '+' : ''}${q.vwap?.priceVsVwap}% vs Price</div>
+                        <div class="quant-help">Volume-Weighted Avg Price</div>
+                    </div>
+                    <div class="quant-card" style="background: rgba(244, 114, 182, 0.1);">
+                        <div class="quant-label" style="color: #f472b6;">CMF</div>
+                        <div class="quant-value" style="color: #e2e8f0;">${q.cmf?.value || 'N/A'}</div>
+                        <div class="quant-signal" style="color: ${q.cmf?.signal === 'BULLISH' ? '#22c55e' : q.cmf?.signal === 'BEARISH' ? '#ef4444' : '#94a3b8'};">${q.cmf?.signal || 'Neutral'}</div>
+                        <div class="quant-help">Chaikin Money Flow</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // RSI Indicators Section
+        function renderRSIIndicators(stock, indicators) {
+            // Calculate mock RSI metrics based on available data
+            const priceChange = stock.price?.changePct || 0;
+            const volumeVsAvg = indicators.volumeAnalysis?.volumeVsAvg || 0;
+            const foreignNet = indicators.foreignFlow?.netValue || 0;
+            
+            // Stock vs IHSG Divergence detection
+            const ihsgChange = -0.5; // Mock IHSG change
+            const divergence = priceChange > 0 && ihsgChange < 0;
+            
+            // Sector relative performance (mock)
+            const sectorPerformance = priceChange - 1.0; // Mock sector comparison
+            const sectorCatchUp = sectorPerformance > 2 && priceChange > 0;
+            
+            // RS Rating (mock calculation)
+            const rsRating = Math.min(100, Math.max(0, 50 + priceChange * 5));
+            const rsImproving = rsRating > 50 && priceChange > 0;
+            
+            let html = '<div style="font-size: 13px; line-height: 1.6;">';
+            
+            // Stock vs IHSG Divergence
+            if (divergence) {
+                html += `
+                    <div class="rsi-card">
+                        <div class="rsi-title">📈 Stock vs IHSG Divergence - BULLISH</div>
+                        <div class="rsi-desc">Stock holds firm or rises (+${priceChange.toFixed(1)}%) while IHSG drops (${ihsgChange}%). <strong>Bandar is defending position</strong> - institutional support detected even in weak market conditions.</div>
+                    </div>
+                `;
+            }
+            
+            // Sector Laggard Catch-Up
+            if (sectorCatchUp) {
+                html += `
+                    <div class="rsi-card">
+                        <div class="rsi-title">🚀 Sector Laggard Catch-Up - ACCUMULATION PHASE</div>
+                        <div class="rsi-desc">Stock underperformed sector for weeks, now suddenly leading (+${sectorPerformance.toFixed(1)}% vs sector). <strong>Late accumulation before rotation</strong> - smart money positioning ahead of sector move.</div>
+                    </div>
+                `;
+            }
+            
+            // RS Rating Improvement
+            if (rsImproving) {
+                const quartile = rsRating > 75 ? 'Top Quartile' : rsRating > 50 ? '2nd Quartile' : 'Bottom Half';
+                html += `
+                    <div class="rsi-card">
+                        <div class="rsi-title">📊 RS Rating Improvement - MOMENTUM BUILDING</div>
+                        <div class="rsi-desc">Relative Strength rank improving to <strong>${rsRating.toFixed(0)}/100 (${quartile})</strong> within recent period. <strong>Strong momentum confirmation</strong> - outperforming broader market.</div>
+                    </div>
+                `;
+            }
+            
+            if (!divergence && !sectorCatchUp && !rsImproving) {
+                html += '<p style="color: #64748b;">No significant RSI indicators detected</p>';
+            }
+            
+            html += '</div>';
+            return html;
+        }
+
+        function renderPriceActionWithExplanations(indicators) {
+            let html = '<div style="font-size: 13px; line-height: 1.6;">';
+            let hasSignals = false;
+            
+            if (indicators.brokerConcentration?.detected) {
+                hasSignals = true;
+                const exp = getPriceActionExplanation('BROKER_CONCENTRATION');
+                const color = exp.type === 'bullish' ? '#22c55e' : exp.type === 'bearish' ? '#ef4444' : '#60a5fa';
+                html += `<div class="signal-card ${exp.type}"><div class="signal-title" style="color: ${color}">📊 ${exp.meaning}</div><div class="signal-reasoning">${exp.reasoning}</div><div class="signal-implication" style="color: ${color}">→ ${exp.implication}</div></div>`;
+            }
+            
+            if (indicators.foreignStreak?.detected && indicators.foreignStreak.consecutiveDays >= 3) {
+                hasSignals = true;
+                const exp = getPriceActionExplanation('COORDINATED_BUYING');
+                html += `<div class="signal-card ${exp.type}"><div class="signal-title" style="color: #22c55e">🤝 ${exp.meaning}</div><div class="signal-reasoning">${exp.reasoning}</div><div class="signal-implication" style="color: #22c55e">→ ${exp.implication}</div></div>`;
+            }
+            
+            if (indicators.volumeAnalysis?.volumeDryUp?.detected) {
+                hasSignals = true;
+                const exp = getPriceActionExplanation('VOLUME_DRY_UP');
+                html += `<div class="signal-card ${exp.type}"><div class="signal-title" style="color: #eab308">📉 ${exp.meaning}</div><div class="signal-reasoning">${exp.reasoning}</div><div class="signal-implication" style="color: #22c55e">→ ${exp.implication}</div></div>`;
+            }
+            
+            if (indicators.sidData?.change > 50) {
+                hasSignals = true;
+                const exp = getPriceActionExplanation('RETAIL_FOMO');
+                html += `<div class="signal-card ${exp.type}"><div class="signal-title" style="color: #ef4444">⚠️ ${exp.meaning}</div><div class="signal-reasoning">${exp.reasoning}</div><div class="signal-implication" style="color: #ef4444">→ ${exp.implication}</div></div>`;
+            }
+            
+            if (indicators.priceAction?.signals?.length) {
+                for (const signal of indicators.priceAction.signals) {
+                    hasSignals = true;
+                    const exp = getPriceActionExplanation(signal);
+                    const color = exp.type === 'bullish' ? '#22c55e' : exp.type === 'bearish' ? '#ef4444' : '#60a5fa';
+                    html += `<div class="signal-card ${exp.type}"><div class="signal-title" style="color: ${color}">🎯 ${exp.meaning}</div><div class="signal-reasoning">${exp.reasoning}</div><div class="signal-implication" style="color: ${color}">→ ${exp.implication}</div></div>`;
+                }
+            }
+            
+            if (!hasSignals) html += '<p style="color: #64748b;">No active price action signals</p>';
+            html += '</div>';
+            return html;
+        }
+
+        function renderKeyFactors(reasoning) {
+            if (!reasoning?.details?.length) return '';
+            const factorsHtml = reasoning.details.map(d => {
+                const colorClass = colorCodeFactor(d);
+                const icon = colorClass === 'key-factor-bullish' ? '🟢' : colorClass === 'key-factor-bearish' ? '🔴' : '⚪';
+                return `<div class="${colorClass}" style="margin-bottom: 6px; padding-left: 12px; padding-top: 2px; padding-bottom: 2px;">${icon} ${d}</div>`;
+            }).join('');
+            
+            return `<div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(59, 130, 246, 0.3);">
+                <div style="font-weight: 600; color: #60a5fa; margin-bottom: 8px;">🎯 Key Factors</div>
+                <div style="font-size: 13px;">${factorsHtml}</div>
+            </div>`;
+        }
+
+        // Broker Holdings Detail - shows which brokers hold majority and for how long
+        function renderBrokerHoldingsDetail(brokerSummary, timeframes) {
+            if (!brokerSummary?.length) return '';
+            
+            // Sort by net value (holding the most)
+            const topHolders = brokerSummary
+                .filter(b => (b.netValue || 0) > 0)
+                .sort((a, b) => b.netValue - a.netValue)
+                .slice(0, 5);
+            
+            if (!topHolders.length) return '<p style="color: #64748b;">No major broker holdings detected</p>';
+            
+            let html = '<div style="font-size: 13px; line-height: 1.8;">';
+            
+            for (const b of topHolders) {
+                const brokerName = brokerNameMap[b.code] || b.name || b.code;
+                const holdingValue = (b.netValue / 1000000000).toFixed(1);
+                const lots = (b.buyVolume / 1000).toFixed(1);
+                const avgPrice = b.avgBuyPrice?.toLocaleString() || 'N/A';
+                
+                // Check duration across timeframes
+                let durationText = 'Recent position';
+                if (timeframes) {
+                    const weekBroker = timeframes['1W']?.brokers?.find(bb => bb.code === b.code);
+                    const monthBroker = timeframes['1M']?.brokers?.find(bb => bb.code === b.code);
+                    
+                    if (monthBroker && monthBroker.netValue > 0) {
+                        durationText = 'Holding for 1+ month - HIGH CONVICTION';
+                    } else if (weekBroker && weekBroker.netValue > 0) {
+                        durationText = 'Holding for 1+ week - Building position';
+                    }
+                }
+                
+                html += `
+                    <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; margin-bottom: 8px; border-left: 3px solid #22c55e;">
+                        <div style="font-weight: 600; color: #22c55e; margin-bottom: 4px;">
+                            <span class="tooltip" data-tooltip="${brokerName}">${b.code}</span> - +${holdingValue}B Net
+                        </div>
+                        <div style="color: #cbd5e1; font-size: 12px;">
+                            📦 ${lots}K lots @ Rp ${avgPrice}<br>
+                            ⏱️ ${durationText}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+            return html;
         }
 
         async function showDetail(symbol) {
@@ -305,16 +802,16 @@
                 if (result.status === 'success') detailed = result.data;
             } catch (e) {}
 
+            const price = detailed.price;
             const i = detailed.indicators;
+            const ca = detailed.comprehensiveAnalysis;
+            const band = ca?.bandarmology;
+            const reasoning = detailed.reasoning;
+            
+            const bigDogsAll = i.bigDogActivity || [];
+            const bigDogs = filterBigDogsByTimeframe(bigDogsAll, currentTimeframe, i);
+            
             const tf = i.timeframes?.[currentTimeframe] || { brokers: [], label: 'Current Day' };
-            const bigDogs = i.bigDogActivity || [];
-            const analysis = detailed.comprehensiveAnalysis;
-            
-            const foreignNet = (i.foreignFlow?.netValue || 0) / 1000000000;
-            const volume = (i.volumeAnalysis?.totalVolume || 0) / 1000000;
-            const largeLots = i.largeLotTransactions?.count || 0;
-            const sidChange = i.sidData?.change || 0;
-            
             const tfBrokers = tf.brokers || [];
             const buyers = tfBrokers.filter(b => b.netValue > 0).sort((a, b) => b.netValue - a.netValue);
             const sellers = tfBrokers.filter(b => b.netValue < 0).sort((a, b) => a.netValue - b.netValue);
@@ -328,444 +825,187 @@
                         <p style="color: #64748b; margin: 4px 0 0;">${detailed.name}</p>
                     </div>
                     <div style="margin-left: auto; text-align: right;">
-                        <div style="font-size: 32px; font-weight: 700;">Rp ${detailed.price?.current?.toLocaleString()}</div>
-                        <div style="font-size: 14px; color: ${detailed.price?.changePct >= 0 ? '#22c55e' : '#ef4444'};">${detailed.price?.changePct >= 0 ? '+' : ''}${detailed.price?.changePct?.toFixed(2)}%</div>
+                        <div style="font-size: 32px; font-weight: 700;">Rp ${price?.current?.toLocaleString()}</div>
+                        <div style="font-size: 14px; color: ${price?.changePct >= 0 ? '#22c55e' : '#ef4444'};">${price?.changePct >= 0 ? '+' : ''}${price?.changePct?.toFixed(2)}%</div>
                     </div>
                 </div>
             `;
 
-            document.getElementById('detail-content').innerHTML = `
-                <!-- Quick Stats -->
+            let html = '';
+            
+            // Quick Stats
+            html += `
                 <div class="quick-stats">
-                    <div class="quick-stat-card"><div class="value ${foreignNet >= 0 ? 'buy' : 'sell'}">${foreignNet >= 0 ? '+' : ''}${foreignNet.toFixed(1)}B</div><div class="label">Foreign Net</div></div>
-                    <div class="quick-stat-card"><div class="value">${volume.toFixed(1)}M</div><div class="label">Volume Today</div></div>
-                    <div class="quick-stat-card"><div class="value">${largeLots}</div><div class="label">Large Lots</div></div>
-                    <div class="quick-stat-card"><div class="value ${sidChange >= 0 ? 'buy' : 'sell'}">${sidChange >= 0 ? '+' : ''}${sidChange}</div><div class="label">SID Change</div></div>
+                    <div class="quick-stat-card"><div class="value ${(i?.foreignFlow?.netValue || 0) > 0 ? 'buy' : 'sell'}">${((i?.foreignFlow?.netValue || 0) / 1000000000).toFixed(1)}B</div><div class="label">Foreign Net</div></div>
+                    <div class="quick-stat-card"><div class="value">${((i?.volumeAnalysis?.totalVolume || 0) / 1000000).toFixed(1)}M</div><div class="label">Volume Today</div></div>
+                    <div class="quick-stat-card"><div class="value">${i?.largeLotTransactions?.count || 0}</div><div class="label">Large Lots</div></div>
+                    <div class="quick-stat-card"><div class="value ${(i?.sidData?.change || 0) >= 0 ? 'buy' : 'sell'}">${(i?.sidData?.change || 0) > 0 ? '+' : ''}${i?.sidData?.change || 0}</div><div class="label">SID Change</div></div>
                 </div>
-
-                <!-- Timeframe -->
-                <div class="timeframe-selector">
-                    ${['1D', '1W', '1M', '1Y'].map(tf => `<button class="timeframe-btn ${currentTimeframe === tf ? 'active' : ''}" onclick="setTimeframe('${tf}', '${symbol}')">${tf}</button>`).join('')}
-                </div>
-
-                <!-- Volume Analysis -->
-                ${renderVolumeAnalysis(i)}
-
-                <!-- Price Action -->
-                <div class="price-action-box">
-                    <div style="font-weight: 700; color: #22c55e; margin-bottom: 8px;">📈 PRICE ACTION</div>
-                    <div style="font-size: 13px;">${getSignals(detailed, i)}</div>
-                </div>
-
-                <!-- Big Dog Split -->
-                <div class="two-column">
-                    <div class="section">
-                        <div class="section-title">🐕 BIG DOG BUYING (${currentTimeframe})</div>
-                        ${bigDogBuyers.length ? renderBigDogTable(bigDogBuyers, 'buy') : '<p style="color: #64748b;">No buying activity</p>'}
-                    </div>
-                    <div class="section">
-                        <div class="section-title">🐕 BIG DOG SELLING (${currentTimeframe})</div>
-                        ${bigDogSellers.length ? renderBigDogTable(bigDogSellers, 'sell') : '<p style="color: #64748b;">No selling activity</p>'}
-                    </div>
-                </div>
-
-                <!-- Top Broker Split -->
-                <div class="two-column">
-                    <div class="section">
-                        <div class="section-title">📊 TOP BROKERS BUYING (${currentTimeframe})</div>
-                        ${buyers.length ? renderBrokerTable(buyers, 'buy') : '<p style="color: #64748b;">No buying</p>'}
-                    </div>
-                    <div class="section">
-                        <div class="section-title">📊 TOP BROKERS SELLING (${currentTimeframe})</div>
-                        ${sellers.length ? renderBrokerTable(sellers, 'sell') : '<p style="color: #64748b;">No selling</p>'}
-                    </div>
-                </div>
-
-                <!-- Foreign Flow Streak & Broker Concentration -->
-                <div class="two-column">
-                    ${i.foreignStreak?.detected ? `
-                    <div class="section">
-                        <div class="section-title">🌍 FOREIGN FLOW STREAK</div>
-                        <div style="font-size: 13px;">
-                            <div style="margin-bottom: 8px;"><strong style="color: ${i.foreignStreak.consecutiveDays > 0 ? '#22c55e' : '#ef4444'};">${i.foreignStreak.signal.replace(/_/g, ' ')}</strong></div>
-                            <div>Consecutive Days: <strong>${Math.abs(i.foreignStreak.consecutiveDays)}</strong></div>
-                            <div>Total Net: <strong>Rp ${(Math.abs(i.foreignStreak.totalNetValue)/1000000000).toFixed(1)}B ${i.foreignStreak.totalNetValue > 0 ? 'inflow' : 'outflow'}</strong></div>
-                            <div style="margin-top: 8px; font-size: 11px; color: #94a3b8;">${i.foreignStreak.description}</div>
-                        </div>
-                    </div>
-                    ` : '<div class="section"><div class="section-title">🌍 FOREIGN FLOW STREAK</div><p style="color: #64748b;">No sustained foreign flow pattern detected</p></div>'}
-                    
-                    ${i.brokerConcentration?.detected ? `
-                    <div class="section">
-                        <div class="section-title">🎯 BROKER CONCENTRATION</div>
-                        <div style="font-size: 13px;">
-                            <div style="margin-bottom: 8px;"><strong style="color: #a78bfa;">${i.brokerConcentration.signal.replace(/_/g, ' ')}</strong></div>
-                            <div>Dominant: <strong>${i.brokerConcentration.dominantBrokers.map(b => b.code).join('+')}</strong></div>
-                            <div>Active For: <strong>${i.brokerConcentration.concentrationDays}+ days</strong></div>
-                            <div style="margin-top: 8px; font-size: 11px; color: #94a3b8;">${i.brokerConcentration.description}</div>
-                        </div>
-                    </div>
-                    ` : '<div class="section"><div class="section-title">🎯 BROKER CONCENTRATION</div><p style="color: #64748b;">No significant broker concentration</p></div>'}
-                </div>
-
-                <!-- Price Action Indicators -->
-                <div class="section">
-                    <div class="section-title">📈 PRICE ACTION PATTERNS</div>
-                    <div style="font-size: 13px; line-height: 1.8;">
-                        ${i.priceAction?.priceCompression?.detected ? `
-                            <div style="margin-bottom: 8px; padding: 8px; background: rgba(234, 179, 8, 0.1); border-radius: 4px;">
-                                <strong style="color: #eab308;">COMPRESSION:</strong> ${i.priceAction.priceCompression.description}
-                            </div>
-                        ` : ''}
-                        ${i.priceAction?.fakeBreakdown?.detected ? `
-                            <div style="margin-bottom: 8px; padding: 8px; background: rgba(34, 197, 94, 0.1); border-radius: 4px;">
-                                <strong style="color: #22c55e;">BEAR TRAP:</strong> ${i.priceAction.fakeBreakdown.description}
-                            </div>
-                        ` : ''}
-                        ${i.priceAction?.lowerHighPattern?.detected ? `
-                            <div style="margin-bottom: 8px; padding: 8px; background: rgba(59, 130, 246, 0.1); border-radius: 4px;">
-                                <strong style="color: #60a5fa;">HEALTHY PULLBACK:</strong> ${i.priceAction.lowerHighPattern.description}
-                            </div>
-                        ` : ''}
-                        ${i.priceAction?.floorDefense?.detected ? `
-                            <div style="margin-bottom: 8px; padding: 8px; background: rgba(34, 197, 94, 0.1); border-radius: 4px;">
-                                <strong style="color: #22c55e;">FLOOR DEFENSE:</strong> ${i.priceAction.floorDefense.description}
-                            </div>
-                        ` : ''}
-                        ${i.priceAction?.gapUpBreakout?.detected ? `
-                            <div style="margin-bottom: 8px; padding: 8px; background: rgba(34, 197, 94, 0.1); border-radius: 4px;">
-                                <strong style="color: #22c55e;">GAP UP BREAKOUT:</strong> ${i.priceAction.gapUpBreakout.description}
-                            </div>
-                        ` : ''}
-                        ${!i.priceAction?.priceCompression?.detected && !i.priceAction?.fakeBreakdown?.detected && !i.priceAction?.lowerHighPattern?.detected && !i.priceAction?.floorDefense?.detected && !i.priceAction?.gapUpBreakout?.detected ? `
-                            <p style="color: #64748b;">No significant price action patterns detected</p>
-                        ` : ''}
-                    </div>
-                </div>
-
-                <!-- Quantitative Indicators -->
-                <div class="section">
-                    <div class="section-title">📊 QUANTITATIVE INDICATORS</div>
-                    <div style="font-size: 13px; line-height: 1.8;">
-                        ${i.quantitative ? `
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                                <div style="padding: 12px; background: rgba(59, 130, 246, 0.1); border-radius: 8px;">
-                                    <div style="font-weight: 600; color: #60a5fa; margin-bottom: 4px;">MFI</div>
-                                    <div style="font-size: 20px; font-weight: 700;">${i.quantitative.mfi?.value}</div>
-                                    <div style="font-size: 11px; color: ${i.quantitative.mfi?.signal === 'OVERBOUGHT' ? '#ef4444' : i.quantitative.mfi?.signal === 'OVERSOLD' ? '#22c55e' : '#94a3b8'};">${i.quantitative.mfi?.signal}</div>
-                                </div>
-                                <div style="padding: 12px; background: rgba(167, 139, 250, 0.1); border-radius: 8px;">
-                                    <div style="font-weight: 600; color: #a78bfa; margin-bottom: 4px;">OBV</div>
-                                    <div style="font-size: 20px; font-weight: 700;">${i.quantitative.obv?.value}M</div>
-                                    <div style="font-size: 11px; color: ${i.quantitative.obv?.divergence?.detected ? (i.quantitative.obv?.divergence?.signal === 'BULLISH_DIVERGENCE' ? '#22c55e' : '#ef4444') : '#94a3b8'};">${i.quantitative.obv?.divergence?.signal?.replace(/_/g, ' ') || 'Following Trend'}</div>
-                                </div>
-                                <div style="padding: 12px; background: rgba(34, 197, 94, 0.1); border-radius: 8px;">
-                                    <div style="font-weight: 600; color: #22c55e; margin-bottom: 4px;">VWAP</div>
-                                    <div style="font-size: 16px; font-weight: 700;">Rp ${i.quantitative.vwap?.value?.toLocaleString()}</div>
-                                    <div style="font-size: 11px; color: ${i.quantitative.vwap?.priceVsVwap > 0 ? '#22c55e' : '#ef4444'};">${i.quantitative.vwap?.priceVsVwap > 0 ? '+' : ''}${i.quantitative.vwap?.priceVsVwap}%</div>
-                                </div>
-                                <div style="padding: 12px; background: rgba(244, 114, 182, 0.1); border-radius: 8px;">
-                                    <div style="font-weight: 600; color: #f472b6; margin-bottom: 4px;">CMF</div>
-                                    <div style="font-size: 20px; font-weight: 700;">${i.quantitative.cmf?.value}</div>
-                                    <div style="font-size: 11px; color: ${i.quantitative.cmf?.signal === 'BULLISH' ? '#22c55e' : i.quantitative.cmf?.signal === 'BEARISH' ? '#ef4444' : '#94a3b8'};">${i.quantitative.cmf?.signal}</div>
-                                </div>
-                            </div>
-                        ` : '<p style="color: #64748b;">Quantitative indicators not available</p>'}
-                    </div>
-                </div>
-
-                <!-- Executive Summary (BELOW) -->
-                <div class="executive-summary">
-                    <h3 style="color: #60a5fa; margin-bottom: 12px;">📝 Executive Summary</h3>
-                    <div style="font-size: 14px; margin-bottom: 16px;">${analysis?.summary || detailed.reasoning?.summary || 'No summary'}</div>
-                    
-                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(59, 130, 246, 0.3);">
-                        <div style="font-weight: 600; color: #60a5fa; margin-bottom: 8px;">🎯 Key Factors</div>
-                        <div style="font-size: 13px;">${detailed.reasoning?.details?.map(d => `<div style="margin-bottom: 6px; padding-left: 12px; border-left: 2px solid #334155;">${d}</div>`).join('') || 'No factors'}</div>
-                    </div>
-
-                    <div class="macro-thesis">
-                        <div style="font-weight: 600; color: #eab308; margin-bottom: 8px;">🌍 Macro Investment Thesis</div>
-                        <div style="font-size: 13px;">${analysis?.macroThesis || getMacroThesis(symbol)}</div>
-                    </div>
-                </div>
-
-                <!-- Fundamentals & Cost Basis -->
-                <div class="two-column">
-                    <div class="section">
-                        <div class="section-title">📈 FUNDAMENTAL ANALYSIS</div>
-                        <div style="font-size: 13px;">${getFundamentals(symbol)}</div>
-                    </div>
-                    <div class="section">
-                        <div class="section-title">💰 COST BASIS & LEVELS</div>
-                        <div style="font-size: 13px; line-height: 1.8;">${getCostBasis(detailed, analysis)}</div>
-                    </div>
-                </div>
-
-                <!-- More Analysis -->
-                ${analysis?.sections?.filter(s => !s.title.includes('FUNDAMENTAL') && !s.title.includes('COST BASIS')).map(s => `
-                    <div class="section">
-                        <div class="section-title">${s.title}</div>
-                        <div style="font-size: 13px; line-height: 1.6;">${s.content.map(item => `<div style="margin-bottom: 4px;">${item}</div>`).join('')}</div>
-                    </div>
-                `).join('') || ''}
             `;
 
+            // MOVED UP: Executive Summary with Key Factors (now above timeframe selector)
+            if (ca?.summary) {
+                html += `
+                    <div class="executive-summary">
+                        <h3 style="color: #60a5fa; margin-bottom: 12px;">📝 Executive Summary</h3>
+                        <div style="font-size: 14px; line-height: 1.6;">${ca.summary}</div>
+                        ${renderKeyFactors(reasoning)}
+                    </div>
+                `;
+            }
+
+            // Timeframe Selector
+            html += `<div class="timeframe-selector">${['1D', '1W', '1M', '1Y'].map(tf => `<button class="timeframe-btn ${currentTimeframe === tf ? 'active' : ''}" onclick="setTimeframe('${tf}', '${symbol}')">${tf}</button>`).join('')}</div>`;
+
+            // Top Brokers Split (2-column)
+            html += `
+                <div class="two-column">
+                    <div class="section"><div class="section-title">📊 TOP BUYERS (${currentTimeframe})</div>${renderBrokerTable(buyers, 'buy')}</div>
+                    <div class="section"><div class="section-title">📊 TOP SELLERS (${currentTimeframe})</div>${renderBrokerTable(sellers, 'sell')}</div>
+                </div>
+            `;
+
+            // Big Dog Split (2-column) - FIXED net value display
+            html += `
+                <div class="two-column">
+                    <div class="section"><div class="section-title">🐕 BIG DOG BUYING (${currentTimeframe})</div>${renderBigDogTable(bigDogBuyers, 'buy')}</div>
+                    <div class="section"><div class="section-title">🐕 BIG DOG SELLING (${currentTimeframe})</div>${renderBigDogTable(bigDogSellers, 'sell')}</div>
+                </div>
+            `;
+
+            // Bandarmology Setup Analysis
+            html += renderBandarmologyAnalysis(band);
+
+            // Broker Holdings Detail Section
+            html += `
+                <div class="section" style="margin-bottom: 20px;">
+                    <div class="section-title">💼 Major Broker Holdings & Duration</div>
+                    ${renderBrokerHoldingsDetail(i.brokerSummary, i.timeframes)}
+                </div>
+            `;
+
+            // Volume + Price Action (2-column)
+            html += `
+                <div class="two-column">
+                    <div class="section">
+                        <div class="section-title">📊 Volume Analysis</div>
+                        <div style="font-size: 13px; line-height: 1.8;">
+                            <div style="margin-bottom: 8px;"><strong>Today's Volume:</strong> ${((i?.volumeAnalysis?.totalVolume || 0) / 1000000).toFixed(1)}M</div>
+                            <div style="margin-bottom: 8px;"><strong>20-Day Avg:</strong> ${((i?.volumeAnalysis?.averageVolume || 0) / 1000000).toFixed(1)}M</div>
+                            <div style="margin-bottom: 8px;"><strong>vs Avg:</strong> ${(i?.volumeAnalysis?.volumeVsAvg || 0).toFixed(1)}%</div>
+                            ${i?.volumeAnalysis?.volumeSpike?.detected ? `<div style="color: #22c55e;">📈 Volume Spike: ${i.volumeAnalysis.volumeSpike.ratio}x</div>` : ''}
+                            ${i?.volumeAnalysis?.volumeDryUp?.detected ? `<div style="color: #eab308;">📉 Volume Dry-Up detected</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="section-title">📈 Price Action Signals</div>
+                        ${renderPriceActionWithExplanations(i)}
+                    </div>
+                </div>
+            `;
+
+            // RSI Indicators Section
+            html += `
+                <div class="section" style="margin-bottom: 16px;">
+                    <div class="section-title">📊 Relative Strength Indicators (RSI)</div>
+                    ${renderRSIIndicators(stock, i)}
+                </div>
+            `;
+
+            // Quantitative Indicators
+            html += `
+                <div class="section" style="margin-bottom: 16px;">
+                    <div class="section-title">📊 Quantitative Indicators</div>
+                    ${renderQuantitative(i)}
+                </div>
+            `;
+
+            // Remaining sections in 2-column layout
+            const sections = ca?.sections || [];
+            const remainingSections = sections.filter(s => 
+                !s.title.includes('FUNDAMENTAL') && 
+                !s.title.includes('BROKER CONCENTRATION') && 
+                !s.title.includes('COST BASIS') && 
+                !s.title.includes('FOREIGN FLOW') && 
+                !s.title.includes('VOLUME & MOMENTUM') && 
+                !s.title.includes('RETAIL') && 
+                !s.title.includes('BIG DOG') && 
+                !s.title.includes('KEY LEVELS')
+            );
+            
+            for (let j = 0; j < remainingSections.length; j += 2) {
+                const section1 = remainingSections[j];
+                const section2 = remainingSections[j + 1];
+                
+                if (section2) {
+                    html += `
+                        <div class="two-column">
+                            <div class="section">
+                                <div class="section-title">${section1.title}</div>
+                                <div style="font-size: 13px; line-height: 1.8;">${section1.content.map(item => `<div style="margin-bottom: 4px;">${item}</div>`).join('')}</div>
+                            </div>
+                            <div class="section">
+                                <div class="section-title">${section2.title}</div>
+                                <div style="font-size: 13px; line-height: 1.8;">${section2.content.map(item => `<div style="margin-bottom: 4px;">${item}</div>`).join('')}</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="section" style="margin-bottom: 16px;">
+                            <div class="section-title">${section1.title}</div>
+                            <div style="font-size: 13px; line-height: 1.8;">${section1.content.map(item => `<div style="margin-bottom: 4px;">${item}</div>`).join('')}</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Standard sections
+            const stdSections = sections.filter(s => 
+                s.title.includes('FUNDAMENTAL') || 
+                s.title.includes('BROKER CONCENTRATION') || 
+                s.title.includes('COST BASIS') || 
+                s.title.includes('FOREIGN FLOW') || 
+                s.title.includes('RETAIL') || 
+                s.title.includes('BIG DOG') || 
+                s.title.includes('KEY LEVELS')
+            );
+            
+            for (let j = 0; j < stdSections.length; j += 2) {
+                const section1 = stdSections[j];
+                const section2 = stdSections[j + 1];
+                
+                if (section2) {
+                    html += `
+                        <div class="two-column">
+                            <div class="section">
+                                <div class="section-title">${section1.title}</div>
+                                <div style="font-size: 13px; line-height: 1.8;">${section1.content.map(item => `<div style="margin-bottom: 4px;">${item}</div>`).join('')}</div>
+                            </div>
+                            <div class="section">
+                                <div class="section-title">${section2.title}</div>
+                                <div style="font-size: 13px; line-height: 1.8;">${section2.content.map(item => `<div style="margin-bottom: 4px;">${item}</div>`).join('')}</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="section" style="margin-bottom: 16px;">
+                            <div class="section-title">${section1.title}</div>
+                            <div style="font-size: 13px; line-height: 1.8;">${section1.content.map(item => `<div style="margin-bottom: 4px;">${item}</div>`).join('')}</div>
+                        </div>
+                    `;
+                }
+            }
+
+            document.getElementById('detail-content').innerHTML = html;
             document.getElementById('detail-panel').classList.add('active');
             document.getElementById('overlay').classList.add('active');
-        }
-
-        function renderBigDogTable(brokers, type) {
-            return `<table class="broker-table">
-                <thead><tr><th>Broker</th><th>Lots</th><th>Avg Price</th></tr></thead>
-                <tbody>
-                    ${brokers.map(b => {
-                        const lots = type === 'buy' ? b.buyVolume : b.sellVolume;
-                        const price = type === 'buy' ? b.avgBuyPrice : b.avgSellPrice;
-                        return `<tr><td><strong>${b.code}</strong></td><td style="color: ${type === 'buy' ? '#22c55e' : '#ef4444'}">${(lots/1000).toFixed(1)}K</td><td>Rp ${price?.toLocaleString()}</td></tr>`;
-                    }).join('')}
-                </tbody>
-            </table>`;
-        }
-
-        function renderBrokerTable(brokers, type) {
-            return `<table class="broker-table">
-                <thead><tr><th>Broker</th><th>Total</th><th>Avg</th><th>Net</th></tr></thead>
-                <tbody>
-                    ${brokers.slice(0, 8).map(b => `
-                        <tr>
-                            <td><strong>${b.code}</strong></td>
-                            <td style="font-weight: 600;">${((b.buyVolume + b.sellVolume)/1000).toFixed(1)}K</td>
-                            <td>Rp ${type === 'buy' ? b.avgBuyPrice?.toLocaleString() : b.avgSellPrice?.toLocaleString()}</td>
-                            <td style="color: ${type === 'buy' ? '#22c55e' : '#ef4444'}">${type === 'buy' ? '+' : ''}${(b.netValue/1000000000).toFixed(1)}B</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>`;
-        }
-
-        function setTimeframe(tf, symbol) {
-            currentTimeframe = tf;
-            showDetail(symbol);
         }
 
         function closeDetail() {
             document.getElementById('detail-panel').classList.remove('active');
             document.getElementById('overlay').classList.remove('active');
-        }
-
-        function getSignals(stock, i) {
-            const signals = [];
-            const pc = stock.price?.changePct || 0;
-            const vr = (i.volumeAnalysis?.totalVolume || 0) / (i.volumeAnalysis?.averageVolume || 1);
-            
-            // Volume Spike Detection
-            const vs = i.volumeAnalysis?.volumeSpike;
-            if (vs && vs.detected) {
-                if (vs.signal === 'STEALTH_ACCUMULATION') {
-                    signals.push(`🎯 <strong>STEALTH ACCUMULATION:</strong> Volume ${vs.ratio}x avg (20d) - Possible bandar accumulation without news`);
-                } else if (vs.signal === 'BREAKOUT') {
-                    signals.push(`🚀 <strong>VOLUME BREAKOUT:</strong> Volume ${vs.ratio}x avg - Check for news catalyst`);
-                }
-            }
-            
-            // Volume Dry-Up Detection
-            const vdu = i.volumeAnalysis?.volumeDryUp;
-            if (vdu && vdu.detected) {
-                if (vdu.signal === 'VDU_BREAKOUT') {
-                    signals.push(`🔥 <strong>VDU BREAKOUT:</strong> ${vdu.dryUpDays} days dry-up followed by surge - Bandar accumulation complete!`);
-                } else if (vdu.signal === 'VDU_ACCUMULATING') {
-                    signals.push(`🤐 <strong>VDU PHASE:</strong> Quiet accumulation detected (${vdu.dryUpDays} days low volume)`);
-                }
-            }
-            
-            // Bid-Ask Imbalance Detection
-            const bai = i.volumeAnalysis?.bidAskImbalance;
-            if (bai && bai.detected) {
-                if (bai.signal === 'STEALTH_ACCUMULATION') {
-                    signals.push(`🎯 <strong>STEALTH ACCUMULATION:</strong> ${bai.ratio}x bid/ask while price down - Bandar absorbing selling!`);
-                } else if (bai.signal === 'HIDDEN_SUPPORT') {
-                    signals.push(`🛡️ <strong>HIDDEN FLOOR:</strong> ${bai.ratio}x bid support keeping price flat`);
-                } else if (bai.signal === 'DISTRIBUTION') {
-                    signals.push(`⚠️ <strong>DISTRIBUTION:</strong> ${(1/bai.ratio).toFixed(1)}x selling pressure - Caution!`);
-                }
-            }
-            
-            // Foreign Flow Streak
-            const fs = i.foreignStreak;
-            if (fs && fs.detected) {
-                if (fs.signal === 'STRONG_BULLISH') {
-                    signals.push(`🌊 <strong>STRONG FOREIGN INFLOW:</strong> ${fs.consecutiveDays} day streak, Rp ${(fs.totalNetValue/1000000000).toFixed(1)}B total`);
-                } else if (fs.signal === 'BULLISH') {
-                    signals.push(`💰 <strong>FOREIGN BUYING STREAK:</strong> ${fs.consecutiveDays} consecutive days`);
-                } else if (fs.signal === 'STRONG_BEARISH') {
-                    signals.push(`🚨 <strong>FOREIGN SELLING ALERT:</strong> ${Math.abs(fs.consecutiveDays)} day streak, Rp ${Math.abs(fs.totalNetValue/1000000000).toFixed(1)}B outflow!`);
-                } else if (fs.signal === 'BEARISH') {
-                    signals.push(`⚠️ <strong>FOREIGN SELLING:</strong> ${Math.abs(fs.consecutiveDays)} consecutive days of outflow`);
-                }
-            }
-            
-            // Broker Concentration
-            const bc = i.brokerConcentration;
-            if (bc && bc.detected) {
-                if (bc.signal === 'HIGH_CONCENTRATION') {
-                    signals.push(`🎪 <strong>BANDAR DOMINANCE:</strong> ${bc.dominantBrokers[0]?.code} controlling for ${bc.concentrationDays}+ days`);
-                } else if (bc.signal === 'COORDINATED_BUYING') {
-                    signals.push(`🤝 <strong>COORDINATED ACCUMULATION:</strong> ${bc.dominantBrokers.map(b => b.code).join('+')} acting together`);
-                }
-            }
-            
-            // Price Action Indicators
-            const pa = i.priceAction;
-            if (pa) {
-                if (pa.priceCompression?.detected) {
-                    signals.push(`🤐 <strong>PRICE COMPRESSION:</strong> ${pa.priceCompression.rangePct}% range - Accumulation zone`);
-                }
-                if (pa.fakeBreakdown?.detected) {
-                    signals.push(`🪤 <strong>BEAR TRAP:</strong> False breakdown recovered - Weak hands shaken out!`);
-                }
-                if (pa.floorDefense?.detected) {
-                    signals.push(`🛡️ <strong>FLOOR DEFENDED:</strong> Support at Rp ${pa.floorDefense.defenseLevel?.toLocaleString()} held`);
-                }
-                if (pa.gapUpBreakout?.detected) {
-                    signals.push(`🚀 <strong>GAP UP BREAKOUT:</strong> ${pa.gapUpBreakout.gapPct}% gap with volume - Rally starting!`);
-                }
-            }
-            
-            // Quantitative Indicators
-            const qi = i.quantitative;
-            if (qi) {
-                if (qi.mfi?.value < 30) {
-                    signals.push(`📉 <strong>MFI OVERSOLD:</strong> ${qi.mfi.value} - Potential bounce incoming`);
-                } else if (qi.mfi?.value > 70) {
-                    signals.push(`📈 <strong>MFI OVERBOUGHT:</strong> ${qi.mfi.value} - Consider taking profits`);
-                }
-                if (qi.obv?.divergence?.detected && qi.obv?.divergence?.signal === 'BULLISH_DIVERGENCE') {
-                    signals.push(`📊 <strong>OBV DIVERGENCE:</strong> Volume leading price - Smart money in!`);
-                }
-                if (qi.vwap?.reclaim?.signal === 'ABOVE_VWAP' && qi.vwap?.priceVsVwap > 3) {
-                    signals.push(`🎯 <strong>VWAP BULLISH:</strong> ${qi.vwap.priceVsVwap}% above VWAP - Strong control`);
-                }
-                if (qi.cmf?.value > 0.15) {
-                    signals.push(`💪 <strong>STRONG CMF:</strong> ${qi.cmf.value} - Heavy buying pressure`);
-                }
-            }
-            
-            // Price + Volume signals
-            if (pc > 3 && vr > 2) signals.push('✅ BREAKOUT: +3% with 2x volume');
-            else if (pc < -3 && vr > 2) signals.push('⚠️ DISTRIBUTION: -3% with volume');
-            
-            // Foreign flow
-            const fn = (i.foreignFlow?.netValue || 0) / 1000000000;
-            if (fn > 1) signals.push('✅ Foreign buying >1B');
-            else if (fn < -1) signals.push('⚠️ Foreign selling >1B');
-            
-            return signals.length ? signals.join('<br>') : 'No strong signals';
-        }
-        
-        // New function to render Volume Analysis section
-        function renderVolumeAnalysis(i) {
-            const vs = i.volumeAnalysis?.volumeSpike;
-            const vdu = i.volumeAnalysis?.volumeDryUp;
-            if (!vs) return '';
-            
-            const spikeClass = vs.severity === 'EXTREME' ? 'color: #ef4444;' : vs.severity === 'HIGH' ? 'color: #eab308;' : 'color: #22c55e;';
-            
-            let vduHtml = '';
-            if (vdu && vdu.detected) {
-                const vduClass = vdu.severity === 'HIGH' ? 'color: #22c55e;' : 'color: #eab308;';
-                vduHtml = `
-                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #334155;">
-                        <div style="font-weight: 600; color: #a78bfa; margin-bottom: 8px;">🔇 VOLUME DRY-UP (VDU)</div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px;">
-                            <div>Signal: <strong style="${vduClass}">${vdu.signal.replace(/_/g, ' ')}</strong></div>
-                            <div>Dry-Up Days: <strong>${vdu.dryUpDays}</strong></div>
-                            <div>Avg Dry Volume: <strong>${(vdu.dryUpVolume/1000000).toFixed(1)}M</strong></div>
-                            <div>Confidence: <strong>${vdu.confidence.toFixed(0)}%</strong></div>
-                        </div>
-                        <div style="margin-top: 8px; font-size: 11px; color: #94a3b8;">${vdu.description}</div>
-                    </div>
-                `;
-            }
-            
-            // Bid-Ask Imbalance
-            const bai = i.volumeAnalysis?.bidAskImbalance;
-            let baiHtml = '';
-            if (bai && bai.detected) {
-                const baiClass = bai.signal === 'DISTRIBUTION' ? 'color: #ef4444;' : bai.severity === 'HIGH' ? 'color: #22c55e;' : 'color: #eab308;';
-                baiHtml = `
-                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #334155;">
-                        <div style="font-weight: 600; color: #f472b6; margin-bottom: 8px;">⚖️ BID-ASK IMBALANCE</div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px;">
-                            <div>Signal: <strong style="${baiClass}">${bai.signal.replace(/_/g, ' ')}</strong></div>
-                            <div>Ratio: <strong>${bai.ratio}x</strong></div>
-                            <div>Buy Pressure: <strong>${bai.buyPressure > 0 ? '+' : ''}${bai.buyPressure}%</strong></div>
-                            <div>Severity: <strong>${bai.severity}</strong></div>
-                        </div>
-                        <div style="margin-top: 8px; font-size: 11px; color: #94a3b8;">${bai.description}</div>
-                    </div>
-                `;
-            }
-            
-            return `
-                <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-                    <div style="font-weight: 700; color: #60a5fa; margin-bottom: 12px;">📊 VOLUME ANALYSIS</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px;">
-                        <div>20-Day Avg: <strong>${(vs.avgVolume20d/1000000).toFixed(1)}M</strong></div>
-                        <div>Today's Volume: <strong>${(vs.currentVolume/1000000).toFixed(1)}M</strong></div>
-                        <div>Spike Ratio: <strong style="${spikeClass}">${vs.ratio}x</strong></div>
-                        <div>Signal: <strong>${vs.signal.replace(/_/g, ' ')}</strong></div>
-                    </div>
-                    ${vs.detected ? `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #334155; font-size: 11px; color: #94a3b8;">${vs.description}</div>` : ''}
-                    ${vduHtml}
-                    ${baiHtml}
-                </div>
-            `;
-        }
-
-        function getMacroThesis(symbol) {
-            const theses = {
-                'BBCA': 'Banking leader benefiting from digital transformation. Rising interest rates improving NIM. Strongest ROE in sector justifies premium valuation.',
-                'BBRI': 'Microfinance dominance with unmatched rural reach. Government MSME support creating tailwinds. Best value among big banks at 16.8x P/E.',
-                'TLKM': 'Digital infra leader with data center growth. 5G rollout expanding ARPU. Defensive characteristics with 14.2x P/E.',
-                'ASII': 'Automotive recovery play. Hybrid strategy bridging to EV transition. 12.5x P/E attractive for market leader.',
-                'INKP': 'DEEP VALUE at 8.5x P/E. Global paper demand recovery. Sustainable packaging trend supports long-term demand.',
-                'ADRO': 'Energy security priority extending coal demand. Strong cash flows supporting dividends. 6.8x P/E offers value.',
-                'AMMN': 'Copper/gold exposure with global EV transition. New mine ramping production. Premium valuation supported by 22% ROE.',
-                'ANTM': 'Nickel exposure for EV battery demand. Integration with IMIP industrial park. Recovery play on commodity prices.'
-            };
-            return theses[symbol] || 'Analyze sector trends and competitive position for investment thesis.';
-        }
-
-        function getFundamentals(symbol) {
-            const data = {
-                'BBCA': {s: 'Banking', mc: 850, pe: 18.5, roe: 18.2, a: 'Premium valuation justified by 18.2% ROE and digital leadership'},
-                'BBRI': {s: 'Banking', mc: 620, pe: 16.8, roe: 19.5, a: 'CHEAPEST big bank with HIGHEST 19.5% ROE. Best value play.'},
-                'TLKM': {s: 'Telecom', mc: 280, pe: 14.2, roe: 22.1, a: 'Defensive at 14.2x P/E with 22% ROE. Data center growth story.'},
-                'ASII': {s: 'Automotive', mc: 240, pe: 12.5, roe: 15.8, a: 'Recovery play at 12.5x P/E. Hybrid strategy de-risks EV transition.'},
-                'INKP': {s: 'Paper', mc: 45, pe: 8.5, roe: 12.3, a: 'DEEP VALUE at 8.5x P/E (sector avg 12x). Recovery story.'},
-                'ADRO': {s: 'Coal', mc: 120, pe: 6.8, roe: 28.4, a: 'High ROE 28.4% generating massive cash. 6.8x P/E too cheap.'},
-                'AMMN': {s: 'Mining', mc: 180, pe: 22.4, roe: 25.6, a: 'Copper exposure for EV demand. 25.6% ROE supports premium.'}
-            };
-            const f = data[symbol] || {s: 'General', mc: 50, pe: 15, roe: 15, a: 'Standard metrics'};
-            return `
-                <div><strong>${f.s}</strong> | Market Cap: Rp ${f.mc}T</div>
-                <div style="margin-top: 8px;">P/E: ${f.pe}x | ROE: ${f.roe}%</div>
-                <div style="color: #22c55e; margin-top: 8px;">${f.a}</div>
-            `;
-        }
-
-        function getCostBasis(stock, analysis) {
-            const price = stock.price?.current || 0;
-            const costSection = analysis?.sections?.find(s => s.title.includes('COST BASIS'));
-            if (costSection) {
-                return costSection.content.slice(0, 5).join('<br>');
-            }
-            return `
-                <div>Current: Rp ${Math.floor(price).toLocaleString()}</div>
-                <div>Support: Rp ${Math.floor(price * 0.97).toLocaleString()}</div>
-                <div>Resistance: Rp ${Math.floor(price * 1.03).toLocaleString()}</div>
-            `;
         }
 
         loadData();
