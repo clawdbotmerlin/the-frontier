@@ -269,7 +269,7 @@ async function generateBandarIndicators(symbol, priceData) {
     // Get real broker transactions
     const txData = await getBrokerTransactionsFromDB(symbol);
     console.log(`[DEBUG] Got txData for ${symbol}: ${txData ? txData.transactions?.length : 0} transactions`);
-    
+
     if (!txData || !txData.transactions || txData.transactions.length === 0) {
       console.log(`No transaction data found for ${symbol}, falling back to basic data`);
       return generateBasicIndicators(symbol, priceData);
@@ -283,16 +283,42 @@ async function generateBandarIndicators(symbol, priceData) {
     let foreignBuyValue = 0;
     let foreignSellVolume = 0;
     let foreignSellValue = 0;
-    
+
     // Calculate totals
     let totalBuyVolume = 0;
     let totalBuyValue = 0;
     let totalSellVolume = 0;
     let totalSellValue = 0;
-    
+
     // Track top brokers
     const brokerSummary = [];
     const bandarBrokerActivity = [];
+
+    // Initialize indicator variables (scoped for return statement)
+    let volumeSpike = null;
+    let volumeDryUp = null;
+    let bidAskImbalance = {
+      detected: false,
+      ratio: 1.0,
+      signal: 'NEUTRAL',
+      severity: 'NONE',
+      buyPressure: 0,
+      description: 'No significant bid-ask imbalance detected'
+    };
+    let foreignStreak = {
+      detected: false,
+      consecutiveDays: 0,
+      totalNetValue: 0,
+      signal: 'NEUTRAL',
+      description: 'No sustained foreign flow pattern'
+    };
+    let brokerConcentration = {
+      detected: false,
+      dominantBrokers: [],
+      concentrationDays: 0,
+      signal: 'NEUTRAL',
+      description: 'No significant broker concentration'
+    };
     
     for (const tx of transactions) {
       const buyVol = parseInt(tx.buy_volume) || 0;
@@ -343,8 +369,7 @@ async function generateBandarIndicators(symbol, priceData) {
     // Get historical volume for comparison (20 days)
     const histVolumeData = await getHistoricalVolumeData(symbol, 20);
     let avgVolume = volume;
-    let volumeSpike = null;
-    
+
     // Lowered threshold: need 3+ days (was 5+)
     if (histVolumeData.length > 3) {
       const volumes = histVolumeData.map(v => parseInt(v.total_volume));
@@ -385,9 +410,8 @@ async function generateBandarIndicators(symbol, priceData) {
           currentVolume: currentTotalVolume
         };
       }
-      
+
       // Volume Dry-Up (VDU) Detection - lowered to 5 days (was 10)
-      let volumeDryUp = null;
       if (volumes.length >= 5) {
         const recentVolumes = volumes.slice(-5);
         const recentAvg = recentVolumes.slice(0, 3).reduce((a, b) => a + b, 0) / 3;
@@ -429,18 +453,9 @@ async function generateBandarIndicators(symbol, priceData) {
         }
       }
     }
-    
+
     // Bid-Ask Volume Imbalance Detection (Indicator #3)
     // Detects consistently higher bid volume vs ask even when price flat/down
-    const bidAskImbalance = {
-      detected: false,
-      ratio: 1.0,
-      signal: 'NEUTRAL',
-      severity: 'NONE',
-      buyPressure: 0,
-      description: 'No significant bid-ask imbalance detected'
-    };
-    
     // Calculate bid-ask ratio from broker activity
     const totalBidVolume = totalBuyVolume;
     const totalAskVolume = totalSellVolume;
@@ -508,16 +523,8 @@ async function generateBandarIndicators(symbol, priceData) {
     // SID data (simulated - would need SID table)
     const sidCount = Math.floor(1000 + Math.random() * 5000);
     const sidChange = Math.floor((Math.random() - 0.5) * 200);
-    
+
     // Indicator #4: Foreign Net Buy Flow (multi-day streak detection)
-    let foreignStreak = {
-      detected: false,
-      consecutiveDays: 0,
-      totalNetValue: 0,
-      signal: 'NEUTRAL',
-      description: 'No sustained foreign flow pattern'
-    };
-    
     try {
       const foreignFlowHistory = await getForeignFlowHistory(symbol, 10);
       
@@ -572,16 +579,8 @@ async function generateBandarIndicators(symbol, priceData) {
     } catch (error) {
       console.error(`Error calculating foreign streak for ${symbol}:`, error.message);
     }
-    
+
     // Indicator #5: Broker Flow Concentration (1-3 brokers dominating)
-    let brokerConcentration = {
-      detected: false,
-      dominantBrokers: [],
-      concentrationDays: 0,
-      signal: 'NEUTRAL',
-      description: 'No significant broker concentration'
-    };
-    
     try {
       const brokerHistory = await getBrokerConcentrationHistory(symbol, 10);
       
@@ -697,8 +696,6 @@ async function generateBandarIndicators(symbol, priceData) {
         netValue: totalBuyValue - totalSellValue
       }
     };
-    console.log(`[DEBUG] Successfully generated indicators for ${symbol} with all new fields`);
-    return result;
   } catch (error) {
     console.error(`[DEBUG ERROR] generateBandarIndicators failed for ${symbol}:`, error.message);
     console.error(error.stack);
