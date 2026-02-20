@@ -1,5 +1,7 @@
-// Clean Bandarmology Scoring - Correct Cost Basis
-// NO magic numbers, simple clear logic
+// Honest Bandarmology Scoring v2.0
+// More conservative - requires multiple confirmations for high scores
+// Penalizes bearish signals more heavily
+// Weights adjusted for better accuracy
 
 export function calculateBandarScore(stockData, indicators) {
   const { brokerSummary = [], volumeAnalysis = {}, foreignFlow = {}, priceAction = {} } = indicators;
@@ -13,19 +15,12 @@ export function calculateBandarScore(stockData, indicators) {
   
   for (const b of brokerSummary) {
     if (b.buyVolume > 0) {
-      // buyVolume is in LOTS (1 lot = 100 shares)
-      // buyValue is total value in IDR
-      // avg price = buyValue / (buyVolume * 100)
-      const avgPrice = b.avgBuyPrice || (b.buyValue / (b.buyVolume * 100));
       totalBuyValue += b.buyValue;
       totalBuyLots += b.buyVolume;
     }
   }
   
-  // Weighted average cost
   const avgBrokerCost = totalBuyLots > 0 ? totalBuyValue / (totalBuyLots * 100) : currentPrice;
-  
-  // Price relative to cost
   const premiumToCost = ((currentPrice - avgBrokerCost) / avgBrokerCost) * 100;
   
   // Foreign flow
@@ -36,253 +31,203 @@ export function calculateBandarScore(stockData, indicators) {
   const top3Brokers = sortedByNet.slice(0, 3);
   const top3NetValue = top3Brokers.reduce((sum, b) => sum + (b.netValue || 0), 0);
   
-  // Build clear analysis
-  const analysis = [];
-  
-  // 1. Cost Basis Analysis
-  analysis.push(`💰 COST BASIS ANALYSIS:`);
-  analysis.push(`   Current Price: Rp ${Math.floor(currentPrice).toLocaleString()}`);
-  analysis.push(`   Avg Broker Cost: Rp ${Math.floor(avgBrokerCost).toLocaleString()}`);
-  analysis.push(`   Premium/Discount: ${premiumToCost > 0 ? '+' : ''}${premiumToCost.toFixed(1)}%`);
-  
-  if (Math.abs(premiumToCost) < 5) {
-    analysis.push(`   ✅ FAIR VALUE: Price near broker cost`);
-  } else if (premiumToCost > 20) {
-    analysis.push(`   ⚠️  OVERVALUED: Price significantly above broker cost`);
-  } else if (premiumToCost < -10) {
-    analysis.push(`   ✅ VALUE: Price below broker cost (potential opportunity)`);
-  }
-  
-  // 2. Foreign Flow
-  analysis.push(`\n🌍 FOREIGN FLOW:`);
-  analysis.push(`   Net: ${foreignNetBillions > 0 ? '+' : ''}${foreignNetBillions.toFixed(2)}B IDR`);
-  if (foreignFlow.buyBrokers?.length) {
-    analysis.push(`   Buying: ${foreignFlow.buyBrokers.join(', ')}`);
-  }
-  if (foreignFlow.sellBrokers?.length) {
-    analysis.push(`   Selling: ${foreignFlow.sellBrokers.join(', ')}`);
-  }
-  
-  // 3. Top Broker Activity
-  analysis.push(`\n📊 TOP BROKER ACTIVITY (Current Day):`);
-  for (const b of top3Brokers) {
-    const action = (b.netValue || 0) > 0 ? 'BUYING' : 'SELLING';
-    const avgPrice = b.netValue > 0 ? (b.avgBuyPrice || 0) : (b.avgSellPrice || 0);
-    analysis.push(`   ${b.code}: ${action} ${Math.abs((b.netValue || 0) / 1000000000).toFixed(1)}B @ Rp ${Math.floor(avgPrice).toLocaleString()}`);
-  }
-  
-  // 4. Volume Analysis
+  // Volume ratio
   const volumeRatio = (volumeAnalysis.totalVolume || 0) / (volumeAnalysis.averageVolume || 1);
-  analysis.push(`\n📈 VOLUME:`);
-  analysis.push(`   Today: ${((volumeAnalysis.totalVolume || 0) / 1000000).toFixed(1)}M shares`);
-  analysis.push(`   20-day Avg: ${((volumeAnalysis.averageVolume || 0) / 1000000).toFixed(1)}M shares`);
-  analysis.push(`   Ratio: ${volumeRatio.toFixed(1)}x`);
   
-  // Simple scoring
+  // ===== HONEST SCORING - More Conservative =====
+  // Start at neutral 50
   let score = 50;
-  const factors = [];
+  const bullishFactors = [];
+  const bearishFactors = [];
   
-  // Foreign flow impact
-  if (foreignNetBillions > 1) {
-    score += 15;
-    factors.push('Foreign buying >1B');
-  } else if (foreignNetBillions < -1) {
-    score -= 15;
-    factors.push('Foreign selling >1B');
-  }
+  // === TIER 1: HIGH CONVICTION SIGNALS (+/- 15 points) ===
   
-  // Top broker alignment
-  if (top3NetValue > 50000000000) {
-    score += 10;
-    factors.push('Top brokers accumulating');
-  } else if (top3NetValue < -50000000000) {
-    score -= 10;
-    factors.push('Top brokers distributing');
-  }
-  
-  // Cost basis
-  if (premiumToCost < -5) {
-    score += 5;
-    factors.push('Below broker cost');
-  }
-  
-  // Volume confirmation
-  if (volumeRatio > 2 && priceChange > 0) {
-    score += 5;
-    factors.push('Volume spike + price up');
-  }
-  
-  // Volume Spike Detection (NEW)
-  const vs = volumeAnalysis.volumeSpike;
-  if (vs && vs.detected) {
-    if (vs.signal === 'STEALTH_ACCUMULATION') {
-      score += 12;
-      factors.push(`Stealth accumulation: ${vs.ratio}x volume spike`);
-    } else if (vs.signal === 'BREAKOUT') {
-      score += 8;
-      factors.push(`Volume breakout: ${vs.ratio}x`);
-    }
-  }
-  
-  // Volume Dry-Up Detection (NEW)
-  const vdu = volumeAnalysis.volumeDryUp;
-  if (vdu && vdu.detected) {
-    if (vdu.signal === 'VDU_BREAKOUT') {
-      score += 15;
-      factors.push(`VDU Breakout: ${vdu.dryUpDays} days dry-up + surge (${vdu.confidence.toFixed(0)}% confidence)`);
-    } else if (vdu.signal === 'VDU_ACCUMULATING') {
-      score += 8;
-      factors.push(`VDU Phase: Quiet accumulation detected (${vdu.dryUpDays} days)`);
-    }
-  }
-  
-  // Bid-Ask Imbalance Detection (NEW)
-  const bai = volumeAnalysis.bidAskImbalance;
-  if (bai && bai.detected) {
-    if (bai.signal === 'STEALTH_ACCUMULATION') {
-      score += 12;
-      factors.push(`Stealth accumulation: ${bai.ratio}x bid/ask ratio while price down`);
-    } else if (bai.signal === 'HIDDEN_SUPPORT') {
-      score += 8;
-      factors.push(`Hidden support: ${bai.ratio}x bid pressure maintaining floor`);
-    } else if (bai.signal === 'DISTRIBUTION') {
-      score -= 12;
-      factors.push(`Distribution detected: ${(1/bai.ratio).toFixed(1)}x selling pressure`);
-    }
-  }
-  
-  // Foreign Flow Streak Detection (NEW)
+  // 1. Strong Foreign Streak (3+ days, >Rp 5B)
   const fs = indicators.foreignStreak;
   if (fs && fs.detected) {
-    if (fs.signal === 'STRONG_BULLISH') {
-      score += 18;
-      factors.push(`Strong foreign streak: ${fs.consecutiveDays} days buying, Rp ${(fs.totalNetValue/1000000000).toFixed(1)}B inflow`);
-    } else if (fs.signal === 'BULLISH') {
-      score += 12;
-      factors.push(`Foreign buying streak: ${fs.consecutiveDays} days`);
-    } else if (fs.signal === 'MODERATE_BULLISH') {
-      score += 6;
-      factors.push(`Foreign accumulation: ${fs.consecutiveDays} days`);
-    } else if (fs.signal === 'STRONG_BEARISH') {
-      score -= 18;
-      factors.push(`⚠️ Foreign selling streak: ${Math.abs(fs.consecutiveDays)} days, Rp ${Math.abs(fs.totalNetValue/1000000000).toFixed(1)}B outflow`);
-    } else if (fs.signal === 'BEARISH') {
-      score -= 12;
-      factors.push(`Foreign selling streak: ${Math.abs(fs.consecutiveDays)} days`);
+    if (fs.signal === 'STRONG_BULLISH' && fs.totalNetValue > 5000000000) {
+      score += 15;
+      bullishFactors.push(`Strong foreign streak: ${fs.consecutiveDays} days, Rp ${(fs.totalNetValue/1e9).toFixed(1)}B inflow`);
+    } else if (fs.signal === 'STRONG_BEARISH' && Math.abs(fs.totalNetValue) > 5000000000) {
+      score -= 18; // PENALIZE MORE
+      bearishFactors.push(`⚠️ Foreign exodus: ${Math.abs(fs.consecutiveDays)} days, Rp ${Math.abs(fs.totalNetValue/1e9).toFixed(1)}B outflow`);
     }
   }
   
-  // Broker Concentration Detection (NEW)
+  // 2. High Bandar Concentration (>50% by top 3)
   const bc = indicators.brokerConcentration;
   if (bc && bc.detected) {
-    if (bc.signal === 'HIGH_CONCENTRATION') {
+    if (bc.signal === 'HIGH_CONCENTRATION' && bc.concentrationDays >= 3) {
       score += 15;
-      factors.push(`Bandar concentration: ${bc.dominantBrokers[0]?.code} dominating for ${bc.concentrationDays} days`);
-    } else if (bc.signal === 'COORDINATED_BUYING') {
-      score += 12;
-      factors.push(`Coordinated buying: ${bc.dominantBrokers.map(b => b.code).join('+')} active together`);
-    } else if (bc.signal === 'MODERATE_CONCENTRATION') {
-      score += 6;
-      factors.push(`Broker accumulation detected`);
+      bullishFactors.push(`Bandar control: ${bc.dominantBrokers.map(b => b.code).join('+')} for ${bc.concentrationDays} days`);
     }
   }
   
-  // Price Action Indicators (#6-10) (NEW)
+  // 3. Gap Up Breakout on Volume
   const pa = indicators.priceAction;
-  if (pa) {
-    // #6: Price Compression
-    if (pa.priceCompression?.detected) {
-      score += 5;
-      factors.push(`Price compression: ${pa.priceCompression.rangePct}% range - accumulation zone`);
-    }
-    
-    // #7: Fake Breakdown / Bear Trap
-    if (pa.fakeBreakdown?.detected && pa.fakeBreakdown.signal === 'BEAR_TRAP') {
-      score += 12;
-      factors.push(`Bear trap: False breakdown recovered with volume - shakeout complete`);
-    }
-    
-    // #8: Lower High on Low Volume (Healthy pullback)
-    if (pa.lowerHighPattern?.detected && pa.lowerHighPattern.signal === 'HEALTHY_PULLBACK') {
-      score += 8;
-      factors.push(`Healthy pullback on low volume - bandar holding positions`);
-    }
-    
-    // #9: Floor Defense
-    if (pa.floorDefense?.detected) {
-      score += 10;
-      factors.push(`Floor defense at Rp ${pa.floorDefense.defenseLevel?.toLocaleString()} - support established`);
-    }
-    
-    // #10: Gap Up Breakout
-    if (pa.gapUpBreakout?.detected) {
-      score += 15;
-      factors.push(`Gap up breakout: ${pa.gapUpBreakout.gapPct}% gap with volume - accumulation complete!`);
-    }
+  if (pa?.gapUpBreakout?.detected && volumeRatio > 1.5) {
+    score += 15;
+    bullishFactors.push(`Gap up breakout: ${pa.gapUpBreakout.gapPct}% with volume - accumulation complete`);
   }
   
-  // Quantitative Indicators (#11-14) (NEW)
+  // === TIER 2: MEDIUM CONVICTION (+/- 8-12 points) ===
+  
+  // 4. Foreign Flow (single day)
+  if (foreignNetBillions > 2) {
+    score += 10;
+    bullishFactors.push(`Strong foreign buying: +${foreignNetBillions.toFixed(1)}B`);
+  } else if (foreignNetBillions > 1) {
+    score += 6;
+    bullishFactors.push(`Foreign buying: +${foreignNetBillions.toFixed(1)}B`);
+  } else if (foreignNetBillions < -2) {
+    score -= 12; // PENALIZE MORE
+    bearishFactors.push(`Strong foreign selling: ${foreignNetBillions.toFixed(1)}B`);
+  } else if (foreignNetBillions < -1) {
+    score -= 8;
+    bearishFactors.push(`Foreign selling: ${foreignNetBillions.toFixed(1)}B`);
+  }
+  
+  // 5. Top Broker Alignment (>Rp 50B)
+  if (top3NetValue > 100000000000) {
+    score += 12;
+    bullishFactors.push(`Major accumulation: Top 3 +Rp ${(top3NetValue/1e9).toFixed(1)}B`);
+  } else if (top3NetValue > 50000000000) {
+    score += 8;
+    bullishFactors.push(`Broker accumulation: Top 3 +Rp ${(top3NetValue/1e9).toFixed(1)}B`);
+  } else if (top3NetValue < -100000000000) {
+    score -= 15; // PENALIZE MORE
+    bearishFactors.push(`Major distribution: Top 3 -Rp ${Math.abs(top3NetValue/1e9).toFixed(1)}B`);
+  } else if (top3NetValue < -50000000000) {
+    score -= 10;
+    bearishFactors.push(`Broker distribution: Top 3 -Rp ${Math.abs(top3NetValue/1e9).toFixed(1)}B`);
+  }
+  
+  // 6. Stealth Accumulation (VDU + Breakout)
+  const vdu = volumeAnalysis.volumeDryUp;
+  if (vdu?.detected && vdu.signal === 'VDU_BREAKOUT') {
+    score += 12;
+    bullishFactors.push(`VDU Breakout: ${vdu.dryUpDays} days quiet accumulation`);
+  }
+  
+  // 7. OBV Bullish Divergence
   const qi = indicators.quantitative;
-  if (qi) {
-    // #11: MFI
-    if (qi.mfi?.value > 50 && qi.mfi?.value < 70) {
-      score += 5;
-      factors.push(`MFI ${qi.mfi.value}: Positive money flow momentum`);
-    } else if (qi.mfi?.value >= 70) {
-      score -= 5;
-      factors.push(`MFI ${qi.mfi.value}: Overbought caution`);
-    } else if (qi.mfi?.value < 30) {
-      score += 8;
-      factors.push(`MFI ${qi.mfi.value}: Oversold - potential bounce`);
-    }
-    
-    // #12: OBV Divergence
-    if (qi.obv?.divergence?.detected) {
-      if (qi.obv.divergence.signal === 'BULLISH_DIVERGENCE') {
-        score += 10;
-        factors.push(`OBV Divergence: Volume leading price - Smart money accumulating`);
-      } else if (qi.obv.divergence.signal === 'BEARISH_DIVERGENCE') {
-        score -= 10;
-        factors.push(`OBV Warning: Rising price on falling volume`);
-      }
-    }
-    
-    // #13: VWAP
-    if (qi.vwap?.reclaim?.signal === 'ABOVE_VWAP') {
-      score += 6;
-      factors.push(`Above VWAP: ${qi.vwap.priceVsVwap}% - Institutional buyers in control`);
-    } else if (qi.vwap?.reclaim?.signal === 'BELOW_VWAP') {
-      score -= 6;
-      factors.push(`Below VWAP: ${qi.vwap.priceVsVwap}% - Weak institutional interest`);
-    }
-    
-    // #14: CMF
-    if (qi.cmf?.value > 0.1) {
-      score += 8;
-      factors.push(`CMF ${qi.cmf.value}: Strong buying pressure`);
-    } else if (qi.cmf?.value < -0.1) {
-      score -= 8;
-      factors.push(`CMF ${qi.cmf.value}: Selling pressure dominant`);
-    }
+  if (qi?.obv?.divergence?.detected && qi.obv.divergence.signal === 'BULLISH_DIVERGENCE') {
+    score += 10;
+    bullishFactors.push(`OBV Divergence: Smart money accumulating`);
+  } else if (qi?.obv?.divergence?.detected && qi.obv.divergence.signal === 'BEARISH_DIVERGENCE') {
+    score -= 10;
+    bearishFactors.push(`OBV Warning: Distribution pattern`);
   }
   
-  score = Math.max(20, Math.min(80, score));
+  // === TIER 3: CONFIRMATION SIGNALS (+/- 3-6 points) ===
   
+  // 8. Volume Confirmation
+  if (volumeRatio > 2.5 && priceChange > 2) {
+    score += 6;
+    bullishFactors.push(`Volume breakout: ${volumeRatio.toFixed(1)}x avg`);
+  } else if (volumeRatio > 2 && priceChange < -1) {
+    score -= 8; // Distribution
+    bearishFactors.push(`Volume distribution: ${volumeRatio.toFixed(1)}x avg with price drop`);
+  }
+  
+  // 9. Cost Basis Position
+  if (premiumToCost >= -5 && premiumToCost <= 15) {
+    score += 5;
+    bullishFactors.push(`Fair value: ${premiumToCost.toFixed(1)}% above cost`);
+  } else if (premiumToCost > 30) {
+    score -= 8; // Overextended
+    bearishFactors.push(`Overextended: ${premiumToCost.toFixed(1)}% above cost`);
+  } else if (premiumToCost < -10) {
+    score += 4;
+    bullishFactors.push(`Value opportunity: ${Math.abs(premiumToCost).toFixed(1)}% below cost`);
+  }
+  
+  // 10. CMF Money Flow
+  if (qi?.cmf?.value > 0.15) {
+    score += 5;
+    bullishFactors.push(`CMF ${qi.cmf.value}: Strong buying pressure`);
+  } else if (qi?.cmf?.value < -0.15) {
+    score -= 6;
+    bearishFactors.push(`CMF ${qi.cmf.value}: Selling pressure`);
+  }
+  
+  // 11. MFI Momentum
+  if (qi?.mfi?.value < 30) {
+    score += 6;
+    bullishFactors.push(`MFI ${qi.mfi.value}: Oversold bounce potential`);
+  } else if (qi?.mfi?.value > 75) {
+    score -= 5;
+    bearishFactors.push(`MFI ${qi.mfi.value}: Overbought caution`);
+  }
+  
+  // 12. Floor Defense
+  if (pa?.floorDefense?.detected) {
+    score += 4;
+    bullishFactors.push(`Support at Rp ${pa.floorDefense.defenseLevel?.toLocaleString()}`);
+  }
+  
+  // === RED FLAG PENALTIES (Additional) ===
+  
+  // 13. Multiple brokers selling (coordinated exit)
+  const sellingBrokers = brokerSummary.filter(b => (b.netValue || 0) < -10000000000);
+  if (sellingBrokers.length >= 3) {
+    score -= 10;
+    bearishFactors.push(`Coordinated exit: ${sellingBrokers.length} major brokers selling`);
+  }
+  
+  // ===== FINAL SCORE CALCULATION =====
+  
+  // Cap the score
+  score = Math.max(15, Math.min(85, score));
+  
+  // REQUIRE MULTIPLE CONFIRMATIONS FOR HIGH SCORES
+  // Need at least 2 bullish factors for BUY signal
+  if (score >= 65 && bullishFactors.length < 2) {
+    score = 60; // Reduce to HOLD range if only 1 factor
+  }
+  
+  // Need strong conviction for BUY (>=70)
+  if (score >= 70 && !bullishFactors.some(f => f.includes('streak') || f.includes('concentration') || f.includes('Gap up'))) {
+    score = 68; // Cap at 68 without tier 1 signal
+  }
+  
+  // PENALIZE MORE: If has critical bearish factor, cap score
+  if (bearishFactors.some(f => f.includes('exodus') || f.includes('distribution'))) {
+    score = Math.min(score, 55); // Cap at 55 if major red flag
+  }
+  
+  // Determine signal
   let signal;
-  if (score >= 65) signal = 'BUY';
-  else if (score >= 50) signal = 'HOLD';
-  else signal = 'REDUCE';
+  if (score >= 70) signal = 'STRONG_BUY';
+  else if (score >= 60) signal = 'BUY';
+  else if (score >= 45) signal = 'HOLD';
+  else if (score >= 35) signal = 'REDUCE';
+  else signal = 'SELL';
+  
+  // Generate honest summary
+  let summary = '';
+  if (bullishFactors.length > 0 && bearishFactors.length === 0) {
+    summary = `${bullishFactors.length} bullish signals: ${bullishFactors[0]}`;
+  } else if (bearishFactors.length > 0 && bullishFactors.length === 0) {
+    summary = `${bearishFactors.length} bearish signals: ${bearishFactors[0]}`;
+  } else if (bullishFactors.length > 0 && bearishFactors.length > 0) {
+    summary = `Mixed: ${bullishFactors[0]} | BUT ${bearishFactors[0]}`;
+  } else {
+    summary = 'No clear directional signals - neutral';
+  }
   
   return {
     score: Math.round(score),
     signal,
     avgBrokerCost: Math.floor(avgBrokerCost),
     premiumToCost,
-    analysis,
-    factors
+    bullishFactors,
+    bearishFactors,
+    summary
   };
 }
 
-export function generateSignalReasoning(score, signal, factors, indicators) {
-  return factors.join('; ');
+export function generateSignalReasoning(score, signal, bullishFactors, bearishFactors) {
+  const allFactors = [...bullishFactors, ...bearishFactors.map(f => '⚠️ ' + f)];
+  return allFactors.slice(0, 5).join('; ');
 }
